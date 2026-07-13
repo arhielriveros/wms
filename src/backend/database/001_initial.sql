@@ -76,6 +76,8 @@ CREATE TABLE IF NOT EXISTS inventory.movement (
   quantity numeric(18,4) NOT NULL, uom text NOT NULL, command_id uuid NOT NULL, payload_checksum text NOT NULL,
   compensates_movement_id uuid NULL, occurred_at timestamptz NOT NULL, UNIQUE (tenant_id, command_id)
 );
+CREATE INDEX IF NOT EXISTS ix_inventory_movement_tenant_dimension_occurred
+  ON inventory.movement (tenant_id, stock_dimension_id, occurred_at, id);
 CREATE TABLE IF NOT EXISTS inventory.reservation (
   id uuid PRIMARY KEY, tenant_id uuid NOT NULL, created_at timestamptz NOT NULL, created_by text NOT NULL,
   correlation_id uuid NOT NULL, version bigint NOT NULL, stock_dimension_id uuid NOT NULL, order_id uuid NOT NULL,

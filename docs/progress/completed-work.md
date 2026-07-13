@@ -14,13 +14,17 @@
 - Validaciones locales: backend sin warnings, 14/14 tests de dominio y arquitectura, typecheck/build web y auditoría npm sin vulnerabilidades.
 - Smoke E2E ejecutado en Docker desde base limpia con dos tenants, mock ERP, replay móvil, happy paths Inbound/Outbound, short pick controlado y webhooks; resultado correcto en 22,0 s.
 - Escenario k6 aprobado: 100 dispositivos, 27.165 iteraciones, lectura de tareas p95 371,62 ms y batch de 100 comandos p95 2,16 s.
+- Cinco millones de movimientos históricos generados con ledger neto e aislamiento tenant verificados; consultas históricas indexadas submilisegundo.
+- Carga móvil repetida sobre 5M: 32.348 iteraciones, lectura p95 289,83 ms y batch p95 4,49 s.
+- Recovery lógico aislado automatizado con checksum y validación de integridad; RTO lógico identificado como no conforme y convertido en gate ejecutable.
+- Recovery físico automatizado con `pg_basebackup`: clúster de 1,986 GB respaldado en 19,922 s y restaurado/validado en 15,302 s, cumpliendo RTO local menor a 60 s.
 
 ## Pendiente para cerrar Hito 4
 
 - Integración con el stack completo de observabilidad, Keycloak, RabbitMQ, Redis y MinIO en un ambiente de piloto.
 - Pruebas ampliadas de IDOR, revocación y escalada contra Keycloak real; el aislamiento tenant del slice E2E ya está cubierto con PostgreSQL/RLS.
-- Carga restante con 30 usuarios web y cinco millones de movimientos históricos; los 100 dispositivos y batches móviles ya cumplen los umbrales.
-- Restore cronometrado, conmutación blue/green y verificación de RPO/RTO.
+- Carga restante con 30 usuarios web; los 100 dispositivos, batches móviles y cinco millones históricos ya cumplen los umbrales.
+- Archivado WAL/PITR para certificar RPO 5 min; el RTO físico ya cumple localmente, mientras el restore lógico no lo hace de forma estable. También falta conmutación blue/green.
 - UAT física de escaneo, sonido, vibración, contraste y guantes en Zebra.
 - Evidencia de ERP real/sandbox, firma de webhooks y reconciliación operacional.
 

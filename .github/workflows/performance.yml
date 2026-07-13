@@ -9,13 +9,29 @@ permissions:
 jobs:
   mobile-load:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Start pilot stack
         run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml up --detach --build --wait --wait-timeout 300
-      - name: Run 100-device and command-batch load
+      - name: Load five million historical movements
+        shell: pwsh
+        run: ./scripts/historical-volume.ps1
+      - name: Run 100-device and command-batch load over historical volume
         run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml --profile load run --rm load-test
+      - name: Run isolated logical recovery drill
+        shell: pwsh
+        run: ./scripts/recovery-drill.ps1
+      - name: Run physical recovery RTO gate
+        shell: pwsh
+        run: ./scripts/physical-recovery-drill.ps1
+      - name: Upload recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: recovery-drill
+          path: .backups/*.json
+          if-no-files-found: warn
       - name: Capture diagnostics
         if: failure()
         run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml logs --no-color --tail 250 api worker postgres

@@ -16,7 +16,7 @@
 | H1 Fundación | monorepo, Compose, CI, seguridad, auditoría y telemetría | Baseline implementada |
 | H2 Inbound | contratos, importación, tareas, stock, sync y confirmación | Baseline implementada |
 | H3 Outbound | pedido, reserva FIFO, picking, packing/despacho y Outbox | Baseline implementada |
-| H4 Hardening/piloto | carga, restore, Zebra, ERP y UAT | Parcial: E2E y carga móvil aprobados |
+| H4 Hardening/piloto | carga, restore, Zebra, ERP y UAT | Parcial: E2E, 5M, carga y RTO físico aprobados; RPO/PITR pendiente |
 
 ## Observaciones resueltas
 
@@ -27,6 +27,9 @@
 - Flujos ASN/recepción/putaway y pedido/pick/pack/ship enlazados a idempotencia y Outbox.
 - Stack reducido con PostgreSQL real, API, worker y mock ERP validado de punta a punta con dos tenants.
 - Carga móvil validada con 100 VUs: lectura p95 371,62 ms y batch de 100 comandos p95 2,16 s.
+- Cinco millones de movimientos validados; con el volumen presente, lectura móvil p95 289,83 ms y batch p95 4,49 s.
+- Recovery lógico íntegro pero variable entre 60,615 y 71,805 s; no certifica RTO menor a 60 s.
+- Recovery físico con `pg_basebackup` aprobado: backup 19,922 s y servicio restaurado/validado en 15,302 s.
 
 ## Dependencias para piloto
 
@@ -34,4 +37,4 @@ Permanecen activos `BLK-UAT-0001` (hardware/red Zebra) y `BLK-UAT-0002` (sandbox
 
 ## Próximo paso único
 
-Ejecutar cinco millones de movimientos históricos y un restore cronometrado para verificar los objetivos RPO/RTO antes de UAT física.
+Configurar archivado WAL/PITR y demostrar RPO menor o igual a 5 minutos sobre el recovery físico validado.
