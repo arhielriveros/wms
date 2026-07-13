@@ -1,0 +1,30 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths: ["src/backend/**", "tests/backend/**", "Directory.Build.props", "global.json", ".github/workflows/backend.yml"]
+  push:
+    branches: [main]
+    paths: ["src/backend/**", "tests/backend/**", "Directory.Build.props", "global.json"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore src/backend/Wms.Backend.slnx
+      - run: dotnet build src/backend/Wms.Backend.slnx --configuration Release --no-restore
+      - run: dotnet test tests/backend/Wms.Backend.Tests/Wms.Backend.Tests.csproj --configuration Release --no-restore --logger "trx;LogFileName=backend.trx" --results-directory TestResults
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: TestResults
+          if-no-files-found: ignore

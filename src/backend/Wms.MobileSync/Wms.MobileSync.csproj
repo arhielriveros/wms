@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Wms.BuildingBlocks/Wms.BuildingBlocks.csproj" />
+    <ProjectReference Include="../Wms.Tenancy/Wms.Tenancy.csproj" />
+    <ProjectReference Include="../Wms.TaskExecution/Wms.TaskExecution.csproj" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+  </ItemGroup>
+</Project>

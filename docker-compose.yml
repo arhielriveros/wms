@@ -1,0 +1,382 @@
+name: ${COMPOSE_PROJECT_NAME:-wms}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      WMS_API_DB_PASSWORD: ${WMS_API_DB_PASSWORD:?set WMS_API_DB_PASSWORD}
+      WMS_WORKER_DB_PASSWORD: ${WMS_WORKER_DB_PASSWORD:?set WMS_WORKER_DB_PASSWORD}
+      TZ: ${TZ:-UTC}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init/001-foundation.sql:/docker-entrypoint-initdb.d/001-foundation.sql:ro
+      - ./src/backend/database/001_initial.sql:/docker-entrypoint-initdb.d/002-mvp.sql:ro
+      - ./infra/postgres/init/003-runtime-users.sh:/docker-entrypoint-initdb.d/003-runtime-users.sh:ro
+      - ./infra/postgres/init/004-pilot-seed.sql:/docker-entrypoint-initdb.d/004-pilot-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks: [wms-core]
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?set RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: /
+      TZ: ${TZ:-UTC}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks: [wms-core]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [wms-core]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm", "--health-enabled=true"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?set KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_DB_SCHEMA: keycloak
+      KC_HTTP_PORT: 8080
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      TZ: ${TZ:-UTC}
+    ports:
+      - "${KEYCLOAK_PORT:-8080}:8080"
+      - "${KEYCLOAK_MANAGEMENT_PORT:-9000}:9000"
+    volumes:
+      - ./infra/keycloak/realm-wms-dev.json:/opt/keycloak/data/import/realm-wms-dev.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200 OK\" <&3'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
+    networks: [wms-core]
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:?set MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?set MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_API_PORT:-9001}:9000"
+      - "${MINIO_CONSOLE_PORT:-9002}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [wms-core]
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-04-16T18-13-26Z
+    restart: "no"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-wms-evidence}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing "local/$$MINIO_BUCKET"
+        mc anonymous set none "local/$$MINIO_BUCKET"
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks: [wms-core]
+
+  mock-erp:
+    image: python:3.13-alpine
+    restart: unless-stopped
+    command: ["python", "/app/server.py"]
+    volumes:
+      - ./infra/mock-erp/server.py:/app/server.py:ro
+    ports:
+      - "${MOCK_ERP_PORT:-9999}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [wms-core]
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.127.0
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./infra/otel-collector/config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "${OTEL_GRPC_PORT:-4317}:4317"
+      - "${OTEL_HTTP_PORT:-4318}:4318"
+      - "13133:13133"
+      - "9464:9464"
+    depends_on:
+      loki:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/otelcol-contrib", "--version"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [wms-observability]
+
+  prometheus:
+    image: prom/prometheus:v3.4.0
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--web.enable-lifecycle"]
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [wms-observability]
+
+  loki:
+    image: grafana/loki:3.5.0
+    restart: unless-stopped
+    command: ["-config.file=/etc/loki/config.yaml"]
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./infra/loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki-data:/loki
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [wms-observability]
+
+  tempo:
+    image: grafana/tempo:2.7.2
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo/config.yaml"]
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+    volumes:
+      - ./infra/tempo/config.yaml:/etc/tempo/config.yaml:ro
+      - tempo-data:/var/tempo
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [wms-observability]
+
+  grafana:
+    image: grafana/grafana:12.0.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:?set GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+      tempo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks: [wms-observability]
+
+  api:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+      args:
+        WMS_PROJECT: Wms.Api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Wms: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=wms_app;Password=${WMS_API_DB_PASSWORD}
+      Authentication__Authority: http://keycloak:8080/realms/wms-dev
+      Authentication__Audience: wms-api
+      Integration__ReceiptConfirmationWebhookUrl: http://mock-erp:8080/wms/receipts
+      Integration__ShipmentConfirmationWebhookUrl: http://mock-erp:8080/wms/shipments
+      Wms__RabbitMq__Host: rabbitmq
+      Wms__RabbitMq__Username: ${RABBITMQ_USER}
+      Wms__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Wms__Redis__ConnectionString: redis:6379,password=${REDIS_PASSWORD}
+      Wms__ObjectStorage__Endpoint: http://minio:9000
+      Wms__ObjectStorage__AccessKey: ${MINIO_ROOT_USER}
+      Wms__ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD}
+      Wms__ObjectStorage__Bucket: ${MINIO_BUCKET:-wms-evidence}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "${WMS_API_PORT:-8081}:8080"
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      keycloak: {condition: service_healthy}
+      minio: {condition: service_healthy}
+      mock-erp: {condition: service_healthy}
+      otel-collector: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [wms-core, wms-observability]
+
+  worker:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+      args:
+        WMS_PROJECT: Wms.Worker
+    restart: unless-stopped
+    environment:
+      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__Wms: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=wms_worker_login;Password=${WMS_WORKER_DB_PASSWORD}
+      Integration__WebhookSecret: ${WMS_WEBHOOK_SECRET:?set WMS_WEBHOOK_SECRET}
+      Wms__RabbitMq__Host: rabbitmq
+      Wms__RabbitMq__Username: ${RABBITMQ_USER}
+      Wms__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Wms__Redis__ConnectionString: redis:6379,password=${REDIS_PASSWORD}
+      Wms__ObjectStorage__Endpoint: http://minio:9000
+      Wms__ObjectStorage__AccessKey: ${MINIO_ROOT_USER}
+      Wms__ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      postgres: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      redis: {condition: service_healthy}
+      minio: {condition: service_healthy}
+      mock-erp: {condition: service_healthy}
+      otel-collector: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "dotnet", "--info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks: [wms-core, wms-observability]
+
+  web:
+    profiles: [app]
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_WMS_API_URL: ${NEXT_PUBLIC_WMS_API_URL:-http://localhost:8081}
+    restart: unless-stopped
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      WMS_API_BASE_URL: http://api:8080
+      NEXT_PUBLIC_WMS_API_URL: ${NEXT_PUBLIC_WMS_API_URL:-http://localhost:8081}
+    ports:
+      - "${WMS_WEB_PORT:-3000}:3000"
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [wms-core, wms-observability]
+
+  load-test:
+    profiles: [load]
+    image: grafana/k6:0.57.0
+    environment:
+      WMS_API_BASE_URL: http://api:8080
+    volumes:
+      - ./tests/performance:/scripts:ro
+    command: ["run", "/scripts/mobile-sync.js"]
+    depends_on:
+      api: {condition: service_healthy}
+    networks: [wms-core]
+
+networks:
+  wms-core:
+    driver: bridge
+  wms-observability:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  redis-data:
+  minio-data:
+  prometheus-data:
+  loki-data:
+  tempo-data:
+  grafana-data:

@@ -1,0 +1,24 @@
+name: Pilot Performance
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start pilot stack
+        run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml up --detach --build --wait --wait-timeout 300
+      - name: Run 100-device and command-batch load
+        run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml --profile load run --rm load-test
+      - name: Capture diagnostics
+        if: failure()
+        run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml logs --no-color --tail 250 api worker postgres
+      - name: Stop pilot stack
+        if: always()
+        run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml --profile load down --volumes --remove-orphans

@@ -1,0 +1,16 @@
+<Solution>
+  <Project Path="Wms.BuildingBlocks/Wms.BuildingBlocks.csproj" />
+  <Project Path="Wms.Tenancy/Wms.Tenancy.csproj" />
+  <Project Path="Wms.SecurityAudit/Wms.SecurityAudit.csproj" />
+  <Project Path="Wms.Layout/Wms.Layout.csproj" />
+  <Project Path="Wms.MasterData/Wms.MasterData.csproj" />
+  <Project Path="Wms.Inventory/Wms.Inventory.csproj" />
+  <Project Path="Wms.Inbound/Wms.Inbound.csproj" />
+  <Project Path="Wms.Outbound/Wms.Outbound.csproj" />
+  <Project Path="Wms.TaskExecution/Wms.TaskExecution.csproj" />
+  <Project Path="Wms.Integration/Wms.Integration.csproj" />
+  <Project Path="Wms.MobileSync/Wms.MobileSync.csproj" />
+  <Project Path="Wms.Api/Wms.Api.csproj" />
+  <Project Path="Wms.Worker/Wms.Worker.csproj" />
+  <Project Path="../../tests/backend/Wms.Backend.Tests/Wms.Backend.Tests.csproj" />
+</Solution>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../src/backend/Wms.BuildingBlocks/Wms.BuildingBlocks.csproj" />
+    <ProjectReference Include="../../../src/backend/Wms.Inventory/Wms.Inventory.csproj" />
+    <ProjectReference Include="../../../src/backend/Wms.Integration/Wms.Integration.csproj" />
+    <ProjectReference Include="../../../src/backend/Wms.Inbound/Wms.Inbound.csproj" />
+    <ProjectReference Include="../../../src/backend/Wms.MobileSync/Wms.MobileSync.csproj" />
+    <ProjectReference Include="../../../src/backend/Wms.Outbound/Wms.Outbound.csproj" />
+    <ProjectReference Include="../../../src/backend/Wms.TaskExecution/Wms.TaskExecution.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <PackageReference Include="FluentAssertions" Version="6.12.2" />
+  </ItemGroup>
+</Project>

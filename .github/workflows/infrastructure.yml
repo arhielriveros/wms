@@ -1,0 +1,35 @@
+name: Infrastructure CI
+
+on:
+  pull_request:
+    paths: ["docker-compose.yml", ".env.example", "infra/**", "scripts/**", ".github/workflows/infrastructure.yml"]
+  push:
+    branches: [main]
+    paths: ["docker-compose.yml", "infra/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose --env-file .env.example config --quiet
+      - name: Validate JSON
+        shell: pwsh
+        run: |
+          Get-ChildItem infra -Recurse -File -Filter *.json |
+            ForEach-Object { Get-Content -Raw $_.FullName | ConvertFrom-Json | Out-Null }
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          $errors = @()
+          Get-ChildItem scripts -File -Filter *.ps1 | ForEach-Object {
+            $tokens = $null
+            $parseErrors = $null
+            [void][Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$parseErrors)
+            $errors += $parseErrors
+          }
+          if ($errors) { $errors | Format-List; exit 1 }

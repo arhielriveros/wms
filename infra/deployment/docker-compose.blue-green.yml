@@ -1,0 +1,43 @@
+services:
+  api-blue:
+    image: ${WMS_API_IMAGE:?set WMS_API_IMAGE}:${WMS_IMAGE_TAG:?set WMS_IMAGE_TAG}
+    profiles: [blue]
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      WMS__DeploymentSlot: blue
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports: ["18080:8080"]
+    networks: [wms-core, wms-observability]
+  worker-blue:
+    image: ${WMS_WORKER_IMAGE:-${WMS_API_IMAGE}}:${WMS_IMAGE_TAG}
+    profiles: [blue]
+    restart: unless-stopped
+    command: ["worker"]
+    environment:
+      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      WMS__DeploymentSlot: blue
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    networks: [wms-core, wms-observability]
+  api-green:
+    image: ${WMS_API_IMAGE:?set WMS_API_IMAGE}:${WMS_IMAGE_TAG:?set WMS_IMAGE_TAG}
+    profiles: [green]
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      WMS__DeploymentSlot: green
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports: ["18081:8080"]
+    networks: [wms-core, wms-observability]
+  worker-green:
+    image: ${WMS_WORKER_IMAGE:-${WMS_API_IMAGE}}:${WMS_IMAGE_TAG}
+    profiles: [green]
+    restart: unless-stopped
+    command: ["worker"]
+    environment:
+      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      WMS__DeploymentSlot: green
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    networks: [wms-core, wms-observability]

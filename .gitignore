@@ -1,0 +1,42 @@
+# Build and package output
+**/bin/
+**/obj/
+**/.next/
+**/node_modules/
+**/.npm-cache/
+.packages/
+.appdata/
+**/dist/
+**/build/
+**/.gradle/
+**/local.properties
+**/__pycache__/
+*.py[cod]
+*.tsbuildinfo
+
+# IDE and OS
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+**/appsettings.*.local.json
+*.pfx
+*.key
+*.pem
+
+# Runtime data, backups and diagnostics
+.backups/
+artifacts/
+coverage/
+TestResults/
+*.log
+docker-data/
+.runtime/

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <ItemGroup>
+    <ProjectReference Include="../Wms.BuildingBlocks/Wms.BuildingBlocks.csproj" />
+    <ProjectReference Include="../Wms.Tenancy/Wms.Tenancy.csproj" />
+    <ProjectReference Include="../Wms.Integration/Wms.Integration.csproj" />
+    <ProjectReference Include="../Wms.Inbound/Wms.Inbound.csproj" />
+    <ProjectReference Include="../Wms.Outbound/Wms.Outbound.csproj" />
+    <ProjectReference Include="../Wms.Layout/Wms.Layout.csproj" />
+    <ProjectReference Include="../Wms.MasterData/Wms.MasterData.csproj" />
+    <ProjectReference Include="../Wms.TaskExecution/Wms.TaskExecution.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.5" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
+  </ItemGroup>
+</Project>
