@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ["docker-compose.yml", ".env.example", "infra/**", "scripts/**", ".github/workflows/infrastructure.yml"]
   push:
-    branches: [main]
+    branches: [master]
     paths: ["docker-compose.yml", "infra/**"]
 
 permissions:

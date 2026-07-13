@@ -3,41 +3,100 @@ services:
     image: ${WMS_API_IMAGE:?set WMS_API_IMAGE}:${WMS_IMAGE_TAG:?set WMS_IMAGE_TAG}
     profiles: [blue]
     restart: unless-stopped
-    environment:
+    environment: &api-environment
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
-      WMS__DeploymentSlot: blue
+      ConnectionStrings__Wms: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=wms_app;Password=${WMS_API_DB_PASSWORD}
+      Authentication__Authority: http://keycloak:8080/realms/wms-dev
+      Authentication__Audience: wms-api
+      Integration__ReceiptConfirmationWebhookUrl: http://mock-erp:8080/wms/receipts
+      Integration__ShipmentConfirmationWebhookUrl: http://mock-erp:8080/wms/shipments
+      Wms__RabbitMq__Host: rabbitmq
+      Wms__RabbitMq__Username: ${RABBITMQ_USER}
+      Wms__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Wms__Redis__ConnectionString: redis:6379,password=${REDIS_PASSWORD}
+      Wms__ObjectStorage__Endpoint: http://minio:9000
+      Wms__ObjectStorage__AccessKey: ${MINIO_ROOT_USER}
+      Wms__ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD}
+      Wms__ObjectStorage__Bucket: ${MINIO_BUCKET:-wms-evidence}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-    ports: ["18080:8080"]
+      Wms__DeploymentSlot: blue
+    ports: ["${WMS_BLUE_PORT:-18080}:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      mock-erp: {condition: service_healthy}
+    healthcheck: &api-healthcheck
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ready"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
     networks: [wms-core, wms-observability]
+
   worker-blue:
     image: ${WMS_WORKER_IMAGE:-${WMS_API_IMAGE}}:${WMS_IMAGE_TAG}
     profiles: [blue]
     restart: unless-stopped
-    command: ["worker"]
-    environment:
+    environment: &worker-environment
       DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      WMS__DeploymentSlot: blue
+      ConnectionStrings__Wms: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=wms_worker_login;Password=${WMS_WORKER_DB_PASSWORD}
+      Integration__WebhookSecret: ${WMS_WEBHOOK_SECRET:?set WMS_WEBHOOK_SECRET}
+      Wms__RabbitMq__Host: rabbitmq
+      Wms__RabbitMq__Username: ${RABBITMQ_USER}
+      Wms__RabbitMq__Password: ${RABBITMQ_PASSWORD}
+      Wms__Redis__ConnectionString: redis:6379,password=${REDIS_PASSWORD}
+      Wms__ObjectStorage__Endpoint: http://minio:9000
+      Wms__ObjectStorage__AccessKey: ${MINIO_ROOT_USER}
+      Wms__ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      Wms__DeploymentSlot: blue
+    depends_on:
+      postgres: {condition: service_healthy}
+      mock-erp: {condition: service_healthy}
+    healthcheck: &worker-healthcheck
+      test: ["CMD", "dotnet", "--info"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks: [wms-core, wms-observability]
+
   api-green:
     image: ${WMS_API_IMAGE:?set WMS_API_IMAGE}:${WMS_IMAGE_TAG:?set WMS_IMAGE_TAG}
     profiles: [green]
     restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      ASPNETCORE_URLS: http://+:8080
-      WMS__DeploymentSlot: green
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-    ports: ["18081:8080"]
+      <<: *api-environment
+      Wms__DeploymentSlot: green
+    ports: ["${WMS_GREEN_PORT:-18081}:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      mock-erp: {condition: service_healthy}
+    healthcheck: *api-healthcheck
     networks: [wms-core, wms-observability]
+
   worker-green:
     image: ${WMS_WORKER_IMAGE:-${WMS_API_IMAGE}}:${WMS_IMAGE_TAG}
     profiles: [green]
     restart: unless-stopped
-    command: ["worker"]
     environment:
-      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
-      WMS__DeploymentSlot: green
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      <<: *worker-environment
+      Wms__DeploymentSlot: green
+    depends_on:
+      postgres: {condition: service_healthy}
+      mock-erp: {condition: service_healthy}
+    healthcheck: *worker-healthcheck
     networks: [wms-core, wms-observability]
+
+  traffic-router:
+    image: nginx:1.27-alpine
+    profiles: [blue, green]
+    restart: unless-stopped
+    ports: ["${WMS_ROUTER_PORT:-18082}:8080"]
+    volumes:
+      - ${WMS_ROUTER_CONFIG_PATH:?set WMS_ROUTER_CONFIG_PATH}:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8080/health/ready"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    networks: [wms-core]

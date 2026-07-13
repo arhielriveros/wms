@@ -1,0 +1,39 @@
+name: Blue Green Deployment Gate
+
+on:
+  pull_request:
+    paths:
+      - "src/backend/**"
+      - "infra/deployment/**"
+      - "infra/docker/backend.Dockerfile"
+      - "scripts/blue-green*.ps1"
+      - ".github/workflows/deployment.yml"
+  push:
+    branches: [master]
+    paths:
+      - "src/backend/**"
+      - "infra/deployment/**"
+      - "infra/docker/backend.Dockerfile"
+      - "scripts/blue-green*.ps1"
+      - ".github/workflows/deployment.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  switch-rollback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute blue to green switch and rollback drill
+        shell: pwsh
+        run: ./scripts/blue-green-drill.ps1
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blue-green-drill
+          path: .backups/wms-blue-green-*.json
+          if-no-files-found: warn

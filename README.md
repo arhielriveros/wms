@@ -44,6 +44,12 @@ docker compose --env-file .env --project-name wms-smoke --file docker-compose.sm
 ./scripts/pitr-recovery-drill.ps1
 ```
 
+Conmutación blue/green y rollback con tráfico continuo:
+
+```powershell
+./scripts/blue-green-drill.ps1
+```
+
 Validación local sin levantar contenedores:
 
 ```powershell

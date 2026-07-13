@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ["apps/mobile/**", ".github/workflows/mobile.yml"]
   push:
-    branches: [main]
+    branches: [master]
     paths: ["apps/mobile/**"]
 
 permissions:

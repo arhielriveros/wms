@@ -2,11 +2,11 @@
 
 ## Estado
 
-Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Los gates locales de volumen, carga web/móvil, RTO y RPO están aprobados; el cierre del piloto depende del ambiente, hardware y ERP reales.
+Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Los gates locales de volumen, carga web/móvil, RTO/RPO y blue/green están aprobados; el cierre del piloto depende del ambiente, hardware y ERP reales.
 
 ## Documentación
 
-- 227 documentos no vacíos.
+- 229 documentos no vacíos.
 - 11 módulos activos con dossier funcional, técnico, UX, seguridad, observabilidad y pruebas.
 - ADR-0001..0008 aceptados y matriz de trazabilidad validada por CI.
 
@@ -16,7 +16,7 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 - Web Next.js: dashboard operacional responsive y estados degradados explícitos.
 - Android/Kotlin: caché Room, cola de comandos, sincronización WorkManager y fuentes de escaneo.
 - Infraestructura local: 16 servicios/componentes de datos, mensajería, identidad, objetos, mock ERP, telemetría, aplicaciones y carga.
-- Automatización: ocho workflows, smoke E2E, carga k6, validadores documentales, backup/restore y despliegue blue/green.
+- Automatización: nueve workflows, smoke E2E, carga k6, validadores documentales, backup/restore y gate blue/green.
 - Ejecución física conectada: tareas Inbound/Outbound, transacciones multi-schema, auditoría, short pick controlado y confirmaciones ERP.
 
 ## Evidencias locales
@@ -38,15 +38,16 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 | Restore lógico aislado | Integridad correcta; RTO no aprobado: 60,615–71,805 s para objetivo < 60 s |
 | Recovery físico aislado | `pg_basebackup` 19,922 s; recuperación y validación en 15,302 s, RTO < 60 s aprobado localmente |
 | WAL/PITR aislado | backup base 5,632 s; recuperación en 6,585 s; RPO observado 2,313 s y exclusión post-target correcta |
+| Blue/green aislado | switch green 1,553 s; rollback blue 1,296 s; 178 solicitudes y 0 fallos; ambos workers activos |
 
 ## Riesgos abiertos
 
 - La aplicación Android no pudo compilarse en esta estación porque el Android SDK/Gradle wrapper no están disponibles dentro del workspace; CI instala Gradle y el proyecto declara sus versiones.
 - La carga de 100 dispositivos, batch móvil, 30 usuarios web y cinco millones de movimientos históricos quedó demostrada localmente; debe repetirse en infraestructura equivalente al piloto.
-- El restore lógico no cumple de forma estable el RTO, pero recovery físico y PITR cumplieron localmente RTO/RPO. Disponibilidad mensual y conmutación blue/green siguen pendientes en ambiente de piloto.
+- El restore lógico no cumple de forma estable el RTO, pero recovery físico, PITR y blue/green cumplieron localmente. Disponibilidad mensual y repetición contra balanceador/infraestructura piloto siguen pendientes.
 - La compatibilidad Zebra/DataWedge y la ergonomía con guantes requieren prueba física.
 - El mock ERP valida entrega y cabeceras firmadas; el cierre del piloto requiere repetir contra el ERP real o sandbox.
 
 ## Próximo paso único
 
-Ejecutar y documentar una conmutación blue/green con rollback de API/worker antes de la UAT.
+Ampliar el gate de seguridad contra Keycloak real con IDOR, escalada de privilegios y revocación de tokens.

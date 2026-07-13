@@ -15,6 +15,7 @@
 | EPIC-WMS-0001 | FEATURE-SEC-0001 | STORY-SEC-0001 | UC-SEC-0001 | RULE-SEC-0001 | todas | EVENT-SEC-0001 | AuditRecord | RBAC+scopes | TEST-SEC-0001 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0001 | UC-OPS-0001 | RULE-OPS-0001 | health/readiness | eventos técnicos | Backup | ops privileged | TEST-OPS-0001 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0002 | UC-OPS-0002 | RULE-OPS-0002 | API-MOB-0002 / dashboard | eventos técnicos | Métricas | ops privileged | TEST-OPS-0002 | TBD | TBD | Documentado |
+| EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0003 | UC-OPS-0003 | RULE-OPS-0003 | health/readiness | eventos técnicos | DeploymentSlot | ops privileged | TEST-OPS-0003 | TBD | TBD | Implementado |
 
 ## Reglas normativas iniciales
 
@@ -28,5 +29,6 @@
 - `RULE-SEC-0001`: autorización efectiva combina rol y scopes contextuales.
 - `RULE-OPS-0001`: recuperación sólo se declara cuando integridad y smoke están verificados.
 - `RULE-OPS-0002`: el piloto sólo se libera cuando carga móvil/web y volumen histórico cumplen los umbrales acordados.
+- `RULE-OPS-0003`: el tráfico sólo conmuta después de validar API y worker; cualquier fallo preserva o restaura el slot anterior.
 
 La matriz se actualiza en cada PR y release. CI validará formato/referencias; el owner funcional valida semántica.

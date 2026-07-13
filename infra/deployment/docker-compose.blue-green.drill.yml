@@ -1,0 +1,44 @@
+name: wms-blue-green-drill
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      WMS_API_DB_PASSWORD: ${WMS_API_DB_PASSWORD:?set WMS_API_DB_PASSWORD}
+      WMS_WORKER_DB_PASSWORD: ${WMS_WORKER_DB_PASSWORD:?set WMS_WORKER_DB_PASSWORD}
+    volumes:
+      - blue-green-postgres-data:/var/lib/postgresql/data
+      - ../../infra/postgres/init/001-foundation.sql:/docker-entrypoint-initdb.d/001-foundation.sql:ro
+      - ../../src/backend/database/001_initial.sql:/docker-entrypoint-initdb.d/002-mvp.sql:ro
+      - ../../infra/postgres/init/003-runtime-users.sh:/docker-entrypoint-initdb.d/003-runtime-users.sh:ro
+      - ../../infra/postgres/init/004-pilot-seed.sql:/docker-entrypoint-initdb.d/004-pilot-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [wms-core]
+
+  mock-erp:
+    image: python:3.13-alpine
+    command: ["python", "/app/server.py"]
+    volumes:
+      - ../../infra/mock-erp/server.py:/app/server.py:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    networks: [wms-core]
+
+networks:
+  wms-core:
+    driver: bridge
+  wms-observability:
+    driver: bridge
+
+volumes:
+  blue-green-postgres-data:

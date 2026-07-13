@@ -4,7 +4,7 @@
 
 - **Fase:** 4 — Hardening y piloto
 - **Hito activo:** Integración/E2E en ambiente de piloto
-- **Estado:** Baseline, E2E, volumen, carga y recuperación local aprobados; certificación en piloto pendiente
+- **Estado:** Baseline, E2E, volumen, carga, recuperación y blue/green local aprobados; certificación en piloto pendiente
 - **Fecha de corte:** 2026-07-13
 - **Gate F0:** Aprobado por revisión multidisciplinaria y autorización explícita del Product Owner.
 
@@ -16,7 +16,7 @@
 | H1 Fundación | monorepo, Compose, CI, seguridad, auditoría y telemetría | Baseline implementada |
 | H2 Inbound | contratos, importación, tareas, stock, sync y confirmación | Baseline implementada |
 | H3 Outbound | pedido, reserva FIFO, picking, packing/despacho y Outbox | Baseline implementada |
-| H4 Hardening/piloto | carga, restore, Zebra, ERP y UAT | Parcial: E2E, 5M, carga web/móvil y RPO/RTO aprobados localmente |
+| H4 Hardening/piloto | carga, restore, despliegue, Zebra, ERP y UAT | Parcial: E2E, 5M, carga, RPO/RTO y blue/green aprobados localmente |
 
 ## Observaciones resueltas
 
@@ -32,6 +32,7 @@
 - Recovery físico con `pg_basebackup` aprobado: backup 19,922 s y servicio restaurado/validado en 15,302 s.
 - Carga web validada con 30 usuarios: 6.607 consultas, 0 errores y dashboard p95 449,71 ms.
 - Archivado WAL/PITR aprobado localmente: backup base 5,632 s, recovery 6,585 s, RPO observado 2,313 s y transacción post-target excluida.
+- Blue/green aprobado localmente: switch 1,553 s, rollback 1,296 s y 178 solicitudes continuas sin fallos, con ambos workers activos.
 
 ## Dependencias para piloto
 
@@ -39,4 +40,4 @@ Permanecen activos `BLK-UAT-0001` (hardware/red Zebra) y `BLK-UAT-0002` (sandbox
 
 ## Próximo paso único
 
-Ejecutar y documentar la conmutación blue/green y su rollback para API/worker.
+Ampliar el gate de seguridad contra Keycloak real con IDOR, escalada de privilegios y revocación de tokens.

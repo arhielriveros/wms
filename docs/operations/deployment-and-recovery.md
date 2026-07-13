@@ -15,6 +15,14 @@ Local, CI efímero, integración, UAT y piloto. Configuración externa y secreto
 
 Feature flags habilitan shadow mode → zona controlada → full. Cada flag tiene owner, fecha de retiro, default seguro y auditoría.
 
+La conmutación ejecutable usa un ingress estable y mantiene el slot anterior hasta validar API, worker y ruta nueva. Si readiness, recarga o verificación post-switch falla, restaura la configuración anterior y detiene el candidato. El gate local completo es:
+
+```powershell
+./scripts/blue-green-drill.ps1
+```
+
+Para un despliegue controlado se invoca `scripts/blue-green.ps1` con `TargetSlot`, tag inmutable, repositorios API/worker y archivo de ambiente. `KeepPrevious` conserva el slot anterior durante la ventana de observación; sin ese switch se detiene sólo después de verificar el nuevo ingress.
+
 ## Backup
 
 PostgreSQL: full diario, WAL/PITR continuo para RPO 5 min, cifrado y copia fuera del host. S3: versionado/retención. Keycloak y configuración de broker/observabilidad se exportan versionados sin secretos. Se verifican checksums y fallos alertan.

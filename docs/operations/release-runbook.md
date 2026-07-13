@@ -9,11 +9,11 @@
 
 ## Ejecución
 
-Registrar versión, commit, operador, UTC y ticket. Ejecutar blue/green, smoke de autenticación, tenant, inventario, Inbox/Outbox, mobile bootstrap y webhook simulado. Habilitar shadow/zona/full según acta.
+Registrar versión, commit, operador, UTC y ticket. Ejecutar `scripts/blue-green.ps1` con tag inmutable y `KeepPrevious`, luego smoke de autenticación, tenant, inventario, Inbox/Outbox, mobile bootstrap y webhook simulado. Verificar el header de slot por el ingress estable antes de iniciar la observación y habilitar shadow/zona/full según acta.
 
 ## Abort conditions
 
-Fuga tenant, invariante de stock, error rate >5 %, p95 >2× objetivo sostenido, pérdida de trazas, migración irreversible inesperada o falla de autenticación. Conmutar slot, pausar consumidores si aplica y preservar evidencia.
+Fuga tenant, invariante de stock, error rate >5 %, p95 >2× objetivo sostenido, pérdida de trazas, migración irreversible inesperada o falla de autenticación. Reejecutar `scripts/blue-green.ps1` hacia el slot anterior, verificar ingress, pausar consumidores si aplica y preservar evidencia.
 
 ## Cierre
 

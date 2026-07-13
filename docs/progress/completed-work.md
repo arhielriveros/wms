@@ -20,16 +20,17 @@
 - Recovery físico automatizado con `pg_basebackup`: clúster de 1,986 GB respaldado en 19,922 s y restaurado/validado en 15,302 s, cumpliendo RTO local menor a 60 s.
 - Carga de supervisión aprobada con 30 usuarios concurrentes: 6.607 consultas, 0 errores y p95 449,71 ms.
 - WAL continuo y PITR automatizados: recuperación aislada al punto elegido en 6,585 s, RPO observado 2,313 s y transacción posterior correctamente excluida.
+- Conmutación blue/green automatizada con ingress estable: green en 1,553 s, rollback blue en 1,296 s y 178 solicitudes sin fallos; API y workers de ambos slots verificados.
 
 ## Pendiente para cerrar Hito 4
 
 - Integración con el stack completo de observabilidad, Keycloak, RabbitMQ, Redis y MinIO en un ambiente de piloto.
 - Pruebas ampliadas de IDOR, revocación y escalada contra Keycloak real; el aislamiento tenant del slice E2E ya está cubierto con PostgreSQL/RLS.
 - Repetición de carga web/móvil y volumen histórico en infraestructura equivalente al piloto; los umbrales ya cumplen localmente.
-- Repetición del recovery físico/PITR con archivo WAL externo en el ambiente piloto y conmutación blue/green; RPO/RTO ya cumplen localmente, mientras el restore lógico no lo hace de forma estable.
+- Repetición del recovery físico/PITR con archivo WAL externo y del blue/green contra el balanceador real del piloto; RPO/RTO y conmutación ya cumplen localmente, mientras el restore lógico no lo hace de forma estable.
 - UAT física de escaneo, sonido, vibración, contraste y guantes en Zebra.
 - Evidencia de ERP real/sandbox, firma de webhooks y reconciliación operacional.
 
 ## Resultado
 
-La baseline ejecutable de Fase 0 + MVP está implementada y validada estática y dinámicamente para los slices principales. Los objetivos locales de carga, volumen, RPO y RTO están demostrados; no corresponde declarar todavía disponibilidad mensual ni compatibilidad física hasta repetir los gates en el piloto y reunir evidencias externas.
+La baseline ejecutable de Fase 0 + MVP está implementada y validada estática y dinámicamente para los slices principales. Los objetivos locales de carga, volumen, RPO/RTO y despliegue sin corte están demostrados; no corresponde declarar todavía disponibilidad mensual ni compatibilidad física hasta repetir los gates en el piloto y reunir evidencias externas.

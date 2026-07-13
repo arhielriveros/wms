@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ["src/backend/**", "tests/backend/**", "Directory.Build.props", "global.json", ".github/workflows/backend.yml"]
   push:
-    branches: [main]
+    branches: [master]
     paths: ["src/backend/**", "tests/backend/**", "Directory.Build.props", "global.json"]
 
 permissions:

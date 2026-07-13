@@ -4,7 +4,7 @@ on:
   pull_request:
     paths: ["docs/**", "scripts/validate-traceability.ps1", ".github/workflows/traceability.yml"]
   push:
-    branches: [main]
+    branches: [master]
     paths: ["docs/**", "src/**", "apps/**", "tests/**"]
 
 permissions:
