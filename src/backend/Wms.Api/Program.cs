@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,6 +12,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Serilog;
+using Serilog.Sinks.OpenTelemetry;
 using Wms.Api;
 using Wms.BuildingBlocks;
 using Wms.Inbound;
@@ -25,7 +27,20 @@ using Wms.TaskExecution;
 using Wms.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom.Configuration(context.Configuration).Enrich.FromLogContext().WriteTo.Console());
+builder.Host.UseSerilog((context, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.OpenTelemetry(options =>
+    {
+        options.Endpoint = context.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? "http://localhost:4317";
+        options.Protocol = OtlpProtocol.Grpc;
+        options.ResourceAttributes = new Dictionary<string, object>
+        {
+            ["service.name"] = "wms-api",
+            ["deployment.environment"] = context.HostingEnvironment.EnvironmentName
+        };
+    }));
 var connectionString = builder.Configuration.GetConnectionString("Wms") ?? "Host=localhost;Port=5432;Database=wms;Username=wms_app;Password=wms_dev";
 
 builder.Services.AddScoped<TenantContext>();
@@ -113,10 +128,37 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), tags: ["ready"]);
 builder.Services.AddOpenTelemetry().ConfigureResource(r => r.AddService("wms-api"))
     .WithTracing(t => t.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation().AddOtlpExporter())
-    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddHttpClientInstrumentation().AddOtlpExporter());
+    .WithMetrics(m => m.AddMeter(WmsTelemetry.ApiMeterName).AddAspNetCoreInstrumentation().AddHttpClientInstrumentation().AddOtlpExporter());
 
 var app = builder.Build();
 app.UseSerilogRequestLogging();
+app.Use(async (context, next) =>
+{
+    var started = Stopwatch.GetTimestamp();
+    try
+    {
+        await next();
+    }
+    finally
+    {
+        if (!context.Request.Path.StartsWithSegments("/health"))
+        {
+            var elapsed = Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+            var tags = new TagList
+            {
+                { "http.request.method", context.Request.Method },
+                { "http.response.status_class", $"{context.Response.StatusCode / 100}xx" }
+            };
+            WmsTelemetry.ApiRequests.Add(1, tags);
+            WmsTelemetry.ApiRequestDuration.Record(elapsed, tags);
+            app.Logger.LogInformation(
+                "WMS API request completed with method {Method}, status class {StatusClass} and duration {DurationMs} ms",
+                context.Request.Method,
+                $"{context.Response.StatusCode / 100}xx",
+                elapsed);
+        }
+    }
+});
 app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
 {
     var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;

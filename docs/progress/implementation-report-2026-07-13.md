@@ -2,11 +2,11 @@
 
 ## Estado
 
-Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Los gates locales de volumen, carga web/móvil, RTO/RPO, blue/green y seguridad Keycloak están aprobados; el cierre del piloto depende del ambiente, hardware y ERP reales.
+Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Los gates locales de volumen, carga web/móvil, RTO/RPO, blue/green, seguridad Keycloak y observabilidad E2E están aprobados; el cierre del piloto depende del ambiente, hardware y ERP reales.
 
 ## Documentación
 
-- 230 documentos no vacíos.
+- 231 documentos no vacíos.
 - 11 módulos activos con dossier funcional, técnico, UX, seguridad, observabilidad y pruebas.
 - ADR-0001..0008 aceptados y matriz de trazabilidad validada por CI.
 
@@ -16,7 +16,7 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 - Web Next.js: dashboard operacional responsive y estados degradados explícitos.
 - Android/Kotlin: caché Room, cola de comandos, sincronización WorkManager y fuentes de escaneo.
 - Infraestructura local: 16 servicios/componentes de datos, mensajería, identidad, objetos, mock ERP, telemetría, aplicaciones y carga.
-- Automatización: diez workflows, smoke E2E, carga k6, validadores documentales, backup/restore, blue/green y gate Keycloak.
+- Automatización: once workflows, smoke E2E, carga k6, validadores documentales, backup/restore, blue/green, gate Keycloak y gate de observabilidad.
 - Ejecución física conectada: tareas Inbound/Outbound, transacciones multi-schema, auditoría, short pick controlado y confirmaciones ERP.
 
 ## Evidencias locales
@@ -40,6 +40,7 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 | WAL/PITR aislado | backup base 5,632 s; recuperación en 6,585 s; RPO observado 2,313 s y exclusión post-target correcta |
 | Blue/green aislado | switch green 1,553 s; rollback blue 1,296 s; 178 solicitudes y 0 fallos; ambos workers activos |
 | Seguridad Keycloak aislada | 8/8 controles correctos: 401 sin token, 200 autorizado, 403 escalada, 404 IDOR, 200 recurso propio, 401 adulteración, 200 activo y 401 revocado |
+| Observabilidad E2E aislada | PASS en 180,77 s: dependencias y Grafana correctos; 2 métricas, 32 resultados de trazas y 98 streams de logs de API/worker; cero secretos persistidos |
 
 ## Riesgos abiertos
 
@@ -51,4 +52,4 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 
 ## Próximo paso único
 
-Ejecutar el gate de observabilidad de punta a punta con API, worker, RabbitMQ, Redis, MinIO y el stack OpenTelemetry completos.
+Automatizar el gate web de accesibilidad WCAG 2.2 AA y documentar la preparación ergonómica móvil previa a la UAT física Zebra.

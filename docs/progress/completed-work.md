@@ -22,10 +22,11 @@
 - WAL continuo y PITR automatizados: recuperación aislada al punto elegido en 6,585 s, RPO observado 2,313 s y transacción posterior correctamente excluida.
 - Conmutación blue/green automatizada con ingress estable: green en 1,553 s, rollback blue en 1,296 s y 178 solicitudes sin fallos; API y workers de ambos slots verificados.
 - Gate de seguridad real automatizado con Keycloak 26.1: ocho controles aprobados para autenticación, RBAC, IDOR, adulteración y revocación; evidencia redactada y workflow dedicado.
+- Gate de observabilidad E2E automatizado: RabbitMQ/Redis/MinIO y Grafana verificados; métricas, trazas y logs reales de API/worker consultados en Prometheus, Tempo y Loki; evidencia redactada y workflow dedicado.
 
 ## Pendiente para cerrar Hito 4
 
-- Integración con el stack completo de observabilidad, Keycloak, RabbitMQ, Redis y MinIO en un ambiente de piloto.
+- Repetición del gate completo de observabilidad, Keycloak, RabbitMQ, Redis y MinIO en el ambiente de piloto.
 - Repetición del gate Keycloak local en el ambiente piloto con TLS, MFA y configuración operacional definitiva.
 - Repetición de carga web/móvil y volumen histórico en infraestructura equivalente al piloto; los umbrales ya cumplen localmente.
 - Repetición del recovery físico/PITR con archivo WAL externo y del blue/green contra el balanceador real del piloto; RPO/RTO y conmutación ya cumplen localmente, mientras el restore lógico no lo hace de forma estable.

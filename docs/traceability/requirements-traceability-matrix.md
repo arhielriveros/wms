@@ -17,6 +17,7 @@
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0001 | UC-OPS-0001 | RULE-OPS-0001 | health/readiness | eventos técnicos | Backup | ops privileged | TEST-OPS-0001 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0002 | UC-OPS-0002 | RULE-OPS-0002 | API-MOB-0002 / dashboard | eventos técnicos | Métricas | ops privileged | TEST-OPS-0002 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0003 | UC-OPS-0003 | RULE-OPS-0003 | health/readiness | eventos técnicos | DeploymentSlot | ops privileged | TEST-OPS-0003 | TBD | TBD | Implementado |
+| EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0004 | UC-OPS-0004 | RULE-OPS-0004 | health/OTLP/Grafana APIs | señales técnicas | TelemetrySignal | ops privileged + redacted evidence | TEST-OPS-0004 | TBD | TBD | Implementado |
 
 ## Reglas normativas iniciales
 
@@ -32,5 +33,6 @@
 - `RULE-OPS-0001`: recuperación sólo se declara cuando integridad y smoke están verificados.
 - `RULE-OPS-0002`: el piloto sólo se libera cuando carga móvil/web y volumen histórico cumplen los umbrales acordados.
 - `RULE-OPS-0003`: el tráfico sólo conmuta después de validar API y worker; cualquier fallo preserva o restaura el slot anterior.
+- `RULE-OPS-0004`: un gate de observabilidad sólo se aprueba cuando API y worker producen métricas, trazas y logs consultables y sus checks operativos no persisten secretos.
 
 La matriz se actualiza en cada PR y release. CI validará formato/referencias; el owner funcional valida semántica.

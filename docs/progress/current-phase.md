@@ -4,7 +4,7 @@
 
 - **Fase:** 4 — Hardening y piloto
 - **Hito activo:** Integración/E2E en ambiente de piloto
-- **Estado:** Baseline, E2E, volumen, carga, recuperación, blue/green y seguridad Keycloak local aprobados; certificación en piloto pendiente
+- **Estado:** Baseline, E2E, volumen, carga, recuperación, blue/green, seguridad Keycloak y observabilidad E2E local aprobados; certificación en piloto pendiente
 - **Fecha de corte:** 2026-07-13
 - **Gate F0:** Aprobado por revisión multidisciplinaria y autorización explícita del Product Owner.
 
@@ -16,7 +16,7 @@
 | H1 Fundación | monorepo, Compose, CI, seguridad, auditoría y telemetría | Baseline implementada |
 | H2 Inbound | contratos, importación, tareas, stock, sync y confirmación | Baseline implementada |
 | H3 Outbound | pedido, reserva FIFO, picking, packing/despacho y Outbox | Baseline implementada |
-| H4 Hardening/piloto | carga, restore, despliegue, seguridad, Zebra, ERP y UAT | Parcial: E2E, 5M, carga, RPO/RTO, blue/green y Keycloak aprobados localmente |
+| H4 Hardening/piloto | carga, restore, despliegue, seguridad, observabilidad, Zebra, ERP y UAT | Parcial: E2E, 5M, carga, RPO/RTO, blue/green, Keycloak y observabilidad aprobados localmente |
 
 ## Observaciones resueltas
 
@@ -34,6 +34,7 @@
 - Archivado WAL/PITR aprobado localmente: backup base 5,632 s, recovery 6,585 s, RPO observado 2,313 s y transacción post-target excluida.
 - Blue/green aprobado localmente: switch 1,553 s, rollback 1,296 s y 178 solicitudes continuas sin fallos, con ambos workers activos.
 - Seguridad Keycloak aprobada localmente: RBAC, IDOR, adulteración de claims y revocación inmediata con ocho controles HTTP correctos y cero secretos persistidos.
+- Observabilidad E2E aprobada localmente: dependencias operativas sanas, dashboard/datasources provisionados y métricas, trazas y logs consultables para API y worker sin secretos persistidos.
 
 ## Dependencias para piloto
 
@@ -41,4 +42,4 @@ Permanecen activos `BLK-UAT-0001` (hardware/red Zebra) y `BLK-UAT-0002` (sandbox
 
 ## Próximo paso único
 
-Ejecutar el gate de observabilidad de punta a punta con API, worker, RabbitMQ, Redis, MinIO y el stack OpenTelemetry completos.
+Automatizar el gate web de accesibilidad WCAG 2.2 AA y documentar la preparación ergonómica móvil previa a la UAT física Zebra.

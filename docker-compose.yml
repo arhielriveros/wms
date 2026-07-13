@@ -59,13 +59,32 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
       - ./infra/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
-      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 10s
       retries: 12
       start_period: 30s
+    networks: [wms-core]
+
+  rabbitmq-init:
+    image: rabbitmq:4-management-alpine
+    restart: "no"
+    environment:
+      RABBITMQADMIN_USERNAME: ${RABBITMQ_USER:?set RABBITMQ_USER}
+      RABBITMQADMIN_PASSWORD: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD}
+      RABBITMQADMIN_NON_INTERACTIVE_MODE: "true"
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        until rabbitmqadmin --host rabbitmq show overview >/dev/null 2>&1; do sleep 2; done
+        rabbitmqadmin --host rabbitmq definitions import --file /etc/rabbitmq/definitions.json
+    volumes:
+      - ./infra/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     networks: [wms-core]
 
   redis:
@@ -179,8 +198,8 @@ services:
     ports:
       - "${OTEL_GRPC_PORT:-4317}:4317"
       - "${OTEL_HTTP_PORT:-4318}:4318"
-      - "13133:13133"
-      - "9464:9464"
+      - "${OTEL_HEALTH_PORT:-13133}:13133"
+      - "${OTEL_METRICS_PORT:-9464}:9464"
     depends_on:
       loki:
         condition: service_healthy
@@ -294,11 +313,14 @@ services:
       Wms__ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD}
       Wms__ObjectStorage__Bucket: ${MINIO_BUCKET:-wms-evidence}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: wms-api
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=${ASPNETCORE_ENVIRONMENT:-Development}
     ports:
       - "${WMS_API_PORT:-8081}:8080"
     depends_on:
       postgres: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
+      rabbitmq-init: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
       keycloak: {condition: service_healthy}
       minio: {condition: service_healthy}
@@ -332,9 +354,12 @@ services:
       Wms__ObjectStorage__AccessKey: ${MINIO_ROOT_USER}
       Wms__ObjectStorage__SecretKey: ${MINIO_ROOT_PASSWORD}
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_SERVICE_NAME: wms-worker
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=${ASPNETCORE_ENVIRONMENT:-Development}
     depends_on:
       postgres: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
+      rabbitmq-init: {condition: service_completed_successfully}
       redis: {condition: service_healthy}
       minio: {condition: service_healthy}
       mock-erp: {condition: service_healthy}

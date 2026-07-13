@@ -13,11 +13,30 @@
     },
     {
       "type": "timeseries",
-      "title": "Collector received spans",
+      "title": "API request rate",
       "id": 2,
       "datasource": {"type": "prometheus", "uid": "prometheus"},
-      "targets": [{"expr": "rate(wms_otelcol_receiver_accepted_spans_total[5m])", "refId": "A"}],
+      "targets": [{"expr": "sum(rate({__name__=~\"wms_wms_api_requests.*\"}[5m]))", "legendFormat": "requests/s", "refId": "A"}],
       "gridPos": {"h": 8, "w": 16, "x": 8, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "Worker outbox polls",
+      "id": 3,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "sum(rate({__name__=~\"wms_wms_worker_outbox_polls.*\"}[5m]))", "legendFormat": "polls/s", "refId": "A"}],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    },
+    {
+      "type": "timeseries",
+      "title": "Worker delivery outcomes",
+      "id": 4,
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [
+        {"expr": "sum(rate({__name__=~\"wms_wms_worker_outbox_delivered.*\"}[5m]))", "legendFormat": "delivered/s", "refId": "A"},
+        {"expr": "sum(rate({__name__=~\"wms_wms_worker_outbox_failed.*\"}[5m]))", "legendFormat": "failed/s", "refId": "B"}
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
     }
   ],
   "refresh": "30s",

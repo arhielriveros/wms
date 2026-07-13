@@ -31,3 +31,16 @@ Cada alerta incluye impacto, dashboard, CorrelationId de muestra, runbook, owner
 ## Dashboards
 
 Operación E2E, integraciones, inventario/concurrencia, dispositivos, PostgreSQL/broker/cache y SLO/error budget. Un deploy se anota con versión, commit, migrations y flags.
+
+## Implementación MVP
+
+- API exporta `wms.api.requests` y `wms.api.request.duration`; worker exporta polls, claims, entregas, fallos y duración del Outbox.
+- Las métricas excluyen tenant, dispositivo, IDs libres y payloads para limitar cardinalidad.
+- API y worker exportan trazas OTLP; el worker crea spans `outbox.poll` y `outbox.dispatch`.
+- Serilog exporta logs OTLP gRPC con `service.name` explícito (`wms-api` o `wms-worker`) además de stdout.
+- El collector expone métricas para Prometheus, envía trazas a Tempo y logs OTLP a Loki. Grafana provisiona Prometheus, Tempo, Loki y `wms-overview`.
+- RabbitMQ, Redis y MinIO tienen checks operativos en el gate, pero no se declaran dependencias usadas por un flujo de aplicación hasta que el código productivo las consuma.
+
+## Gate ejecutable
+
+`TEST-OPS-0004` se ejecuta con `./scripts/observability-e2e-drill.ps1`. Levanta un proyecto Docker aislado, valida autenticación/provisión de RabbitMQ, Redis, MinIO y Grafana, genera tráfico de API y espera señales consultables de API/worker en Prometheus, Tempo y Loki. La evidencia redactada queda en `.backups/wms-observability-*.json`; CI la conserva 30 días. Los conflictos de puertos se evitan mediante puertos altos privados del drill y la limpieza sólo afecta al proyecto `wms-observability`.

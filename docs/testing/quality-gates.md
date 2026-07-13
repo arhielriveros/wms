@@ -24,7 +24,7 @@ Pedido idempotente, FIFO, reserva sin sobreasignación, pick/short pick, packing
 
 ## Gate H4 — Piloto
 
-Rendimiento/SLO, seguridad, restore, Zebra, WCAG, UAT, runbooks, dashboards, release notes y shadow mode aprobados. El subgate local de seguridad exige `TEST-SEC-0002` verde contra Keycloak real, sin secretos persistidos y con rechazo de IDOR, escalada, adulteración y revocación. Cero defectos críticos; altos requieren aceptación documentada y fecha.
+Rendimiento/SLO, seguridad, restore, Zebra, WCAG, UAT, runbooks, dashboards, release notes y shadow mode aprobados. El subgate local de seguridad exige `TEST-SEC-0002` verde contra Keycloak real, sin secretos persistidos y con rechazo de IDOR, escalada, adulteración y revocación. El subgate de observabilidad exige `TEST-OPS-0004` verde con métricas, trazas y logs consultables para API/worker, dependencias operativas verificadas y evidencia redactada. Cero defectos críticos; altos requieren aceptación documentada y fecha.
 
 ## Criterio Definition of Done
 

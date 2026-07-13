@@ -28,6 +28,7 @@ Datos de prueba son sintéticos y deterministas. Cada test porta su ID de trazab
 | TEST-OPS-0001 | restore PITR | RPO/RTO y checks de integridad cumplidos |
 | TEST-OPS-0002 | 100 dispositivos + 30 usuarios web sobre ≥5M movimientos | p95/batch/error dentro de gate y cero invariantes rotas |
 | TEST-OPS-0003 | blue → green → rollback blue con tráfico continuo | API/worker healthy, slot previo preservado y cero respuestas fallidas |
+| TEST-OPS-0004 | stack completo API/worker + dependencias + LGTM | checks operativos y métricas/trazas/logs consultables para ambos servicios, sin secretos persistidos |
 
 ## Rendimiento
 

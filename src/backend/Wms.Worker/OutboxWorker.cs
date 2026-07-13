@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -14,15 +15,32 @@ public sealed class OutboxWorker(IServiceScopeFactory scopeFactory, ILogger<Outb
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        logger.LogInformation("WMS outbox worker started");
         while (!stoppingToken.IsCancellationRequested)
         {
-            try { await DispatchBatchAsync(stoppingToken); }
-            catch (Exception exception) { logger.LogError(exception, "Outbox dispatch batch failed"); }
+            var started = Stopwatch.GetTimestamp();
+            using var activity = WmsTelemetry.WorkerActivitySource.StartActivity("outbox.poll", ActivityKind.Internal);
+            try
+            {
+                var claimed = await DispatchBatchAsync(stoppingToken);
+                activity?.SetTag("wms.outbox.claimed", claimed);
+                WmsTelemetry.WorkerOutboxClaimed.Add(claimed);
+            }
+            catch (Exception exception)
+            {
+                activity?.SetStatus(ActivityStatusCode.Error, exception.GetType().Name);
+                logger.LogError(exception, "Outbox dispatch batch failed");
+            }
+            finally
+            {
+                WmsTelemetry.WorkerOutboxPolls.Add(1);
+                WmsTelemetry.WorkerOutboxPollDuration.Record(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            }
             await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
         }
     }
 
-    private async Task DispatchBatchAsync(CancellationToken ct)
+    private async Task<int> DispatchBatchAsync(CancellationToken ct)
     {
         var claims = await ClaimAsync(ct);
         foreach (var claim in claims)
@@ -38,8 +56,12 @@ public sealed class OutboxWorker(IServiceScopeFactory scopeFactory, ILogger<Outb
             };
             db.DeliveryAttempts.Add(attempt);
             await db.SaveChangesAsync(ct);
+            using var activity = WmsTelemetry.WorkerActivitySource.StartActivity("outbox.dispatch", ActivityKind.Internal);
+            activity?.SetTag("messaging.operation.type", "process");
             try
             {
+                activity?.SetTag("messaging.message.type", message.MessageType);
+                activity?.SetTag("wms.delivery.kind", message.DeliveryKind);
                 if (message.DeliveryKind == "Internal") await DispatchInternalAsync(scope.ServiceProvider, message, ct);
                 else await DispatchWebhookAsync(scope.ServiceProvider, message, attempt, ct);
                 message.Status = "Delivered";
@@ -48,6 +70,7 @@ public sealed class OutboxWorker(IServiceScopeFactory scopeFactory, ILogger<Outb
                 message.LastErrorCode = null;
                 attempt.Result = "Delivered";
                 attempt.CompletedAt = DateTimeOffset.UtcNow;
+                WmsTelemetry.WorkerOutboxDelivered.Add(1, new KeyValuePair<string, object?>("messaging.message.type", message.MessageType));
             }
             catch (PermanentDeliveryException exception)
             {
@@ -57,6 +80,10 @@ public sealed class OutboxWorker(IServiceScopeFactory scopeFactory, ILogger<Outb
                 attempt.Result = "RequiresReview";
                 attempt.ErrorCode = exception.Code;
                 attempt.CompletedAt = DateTimeOffset.UtcNow;
+                activity?.SetStatus(ActivityStatusCode.Error, "requires_review");
+                WmsTelemetry.WorkerOutboxFailed.Add(1,
+                    new KeyValuePair<string, object?>("wms.delivery.outcome", "requires_review"),
+                    new KeyValuePair<string, object?>("messaging.message.type", message.MessageType));
             }
             catch (Exception exception)
             {
@@ -66,11 +93,16 @@ public sealed class OutboxWorker(IServiceScopeFactory scopeFactory, ILogger<Outb
                 attempt.Result = message.Status;
                 attempt.ErrorCode = message.LastErrorCode;
                 attempt.CompletedAt = DateTimeOffset.UtcNow;
+                activity?.SetStatus(ActivityStatusCode.Error, message.Status);
+                WmsTelemetry.WorkerOutboxFailed.Add(1,
+                    new KeyValuePair<string, object?>("wms.delivery.outcome", message.Status),
+                    new KeyValuePair<string, object?>("messaging.message.type", message.MessageType));
                 logger.LogWarning(exception, "Outbox message {MessageId} failed attempt {Attempt}", message.MessageId, message.Attempts);
             }
             message.Version++;
             await db.SaveChangesAsync(ct);
         }
+        return claims.Count;
     }
 
     private async Task<IReadOnlyList<MessageClaim>> ClaimAsync(CancellationToken ct)

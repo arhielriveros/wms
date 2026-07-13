@@ -1,0 +1,56 @@
+name: Observability E2E CI
+
+on:
+  pull_request:
+    paths:
+      - "docker-compose.yml"
+      - ".env.example"
+      - "infra/grafana/**"
+      - "infra/loki/**"
+      - "infra/otel-collector/**"
+      - "infra/prometheus/**"
+      - "infra/rabbitmq/**"
+      - "infra/tempo/**"
+      - "scripts/observability-e2e-drill.ps1"
+      - "src/backend/Wms.Api/**"
+      - "src/backend/Wms.BuildingBlocks/**"
+      - "src/backend/Wms.Worker/**"
+      - ".github/workflows/observability.yml"
+  push:
+    branches: [master]
+    paths:
+      - "docker-compose.yml"
+      - ".env.example"
+      - "infra/grafana/**"
+      - "infra/loki/**"
+      - "infra/otel-collector/**"
+      - "infra/prometheus/**"
+      - "infra/rabbitmq/**"
+      - "infra/tempo/**"
+      - "scripts/observability-e2e-drill.ps1"
+      - "src/backend/Wms.Api/**"
+      - "src/backend/Wms.BuildingBlocks/**"
+      - "src/backend/Wms.Worker/**"
+      - ".github/workflows/observability.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  observability-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute full observability drill
+        shell: pwsh
+        run: ./scripts/observability-e2e-drill.ps1
+      - name: Upload redacted observability evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: observability-e2e-evidence
+          path: .backups/wms-observability-*.json
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 30

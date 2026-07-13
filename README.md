@@ -4,7 +4,7 @@ Baseline ejecutable del piloto WMS para un almacén mediano. El repositorio cont
 
 ## Estado
 
-**Fase 0 aprobada y baseline de Hitos 1–3 implementada.** Las reglas, contratos y decisiones transversales están versionadas. El código compila, las pruebas de dominio pasan y la consola web produce un build optimizado. El cierre de Hito 4 requiere ejecutar el piloto con servicios reales, hardware Zebra, ERP de prueba y carga representativa.
+**Fase 0 aprobada y baseline de Hitos 1–3 implementada.** Las reglas, contratos y decisiones transversales están versionadas. El código compila, las pruebas de dominio pasan y la consola web produce un build optimizado. Los gates locales de carga, recuperación, seguridad y observabilidad están aprobados; el cierre de Hito 4 requiere repetirlos en el piloto con hardware Zebra y ERP real/sandbox.
 
 ## Componentes
 
@@ -56,6 +56,12 @@ Gate de seguridad con Keycloak real, dos tenants y revocación inmediata:
 ./scripts/keycloak-security-drill.ps1
 ```
 
+Gate E2E de observabilidad con API, worker, dependencias y stack LGTM:
+
+```powershell
+./scripts/observability-e2e-drill.ps1
+```
+
 Validación local sin levantar contenedores:
 
 ```powershell
@@ -90,4 +96,4 @@ La API pública vive bajo `/api/v1`. En desarrollo local puede usarse el esquema
 
 ## Límites de esta entrega
 
-Los gates locales con 100 dispositivos, 30 usuarios web, cinco millones de movimientos, recuperación física/PITR, blue/green y seguridad Keycloak están aprobados. No se declara el piloto productivo hasta repetirlos en infraestructura equivalente, completar UAT física Zebra y reconciliación contra un ERP real. Lotes, series, HU/GS1 avanzado, olas, reposición, devoluciones y optimización permanecen fuera del MVP.
+Los gates locales con 100 dispositivos, 30 usuarios web, cinco millones de movimientos, recuperación física/PITR, blue/green, seguridad Keycloak y observabilidad E2E están aprobados. No se declara el piloto productivo hasta repetirlos en infraestructura equivalente, completar UAT física Zebra y reconciliación contra un ERP real. Lotes, series, HU/GS1 avanzado, olas, reposición, devoluciones y optimización permanecen fuera del MVP.

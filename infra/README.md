@@ -24,11 +24,11 @@ Local endpoints are Keycloak 8080, API 8081, web 3000, RabbitMQ management 15672
 
 ## Data and messaging
 
-PostgreSQL initializes one schema and group role per active module, plus the Keycloak schema. Cross-schema access is not granted automatically. RabbitMQ provisions the topic exchange wms.events, dead-letter exchange wms.dlx and quorum queue wms.dlq. Consumers still require Inbox idempotency and explicit retry policies.
+PostgreSQL initializes one schema and group role per active module, plus the Keycloak schema. Cross-schema access is not granted automatically. RabbitMQ first creates the environment-provided user/vhost and then the one-shot `rabbitmq-init` service imports the topic exchange `wms.events`, dead-letter exchange `wms.dlx` and quorum queue `wms.dlq`; application containers wait for that import. Consumers still require Inbox idempotency and explicit retry policies.
 
 ## Observability
 
-Applications send OTLP to otel-collector:4317. The collector exports metrics to Prometheus, logs to Loki and traces to Tempo. Grafana provisions all datasources and a minimal WMS Overview dashboard. Tokens, unrestricted payloads and personal data are forbidden in telemetry.
+Applications send OTLP to otel-collector:4317. The collector exports metrics to Prometheus, Serilog records to Loki and traces to Tempo. Grafana provisions all datasources and the WMS Overview dashboard. Tokens, unrestricted payloads and personal data are forbidden in telemetry. Run `./scripts/observability-e2e-drill.ps1` to execute `TEST-OPS-0004` in an isolated project and generate redacted evidence.
 
 ## Backup and restore
 

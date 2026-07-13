@@ -241,6 +241,14 @@
       "wms.buildingblocks": {
         "type": "Project"
       },
+      "wms.inbound": {
+        "type": "Project",
+        "dependencies": {
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[9.0.2, )",
+          "Wms.BuildingBlocks": "[1.0.0, )",
+          "Wms.Tenancy": "[1.0.0, )"
+        }
+      },
       "wms.integration": {
         "type": "Project",
         "dependencies": {
@@ -263,6 +271,14 @@
           "Npgsql.EntityFrameworkCore.PostgreSQL": "[9.0.2, )",
           "Wms.BuildingBlocks": "[1.0.0, )",
           "Wms.TaskExecution": "[1.0.0, )",
+          "Wms.Tenancy": "[1.0.0, )"
+        }
+      },
+      "wms.outbound": {
+        "type": "Project",
+        "dependencies": {
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[9.0.2, )",
+          "Wms.BuildingBlocks": "[1.0.0, )",
           "Wms.Tenancy": "[1.0.0, )"
         }
       },
