@@ -35,4 +35,21 @@ El dump lógico queda aprobado como mecanismo de respaldo verificable y recupera
 
 Se generó un `pg_basebackup` consistente del clúster de 1,986 GB en 19,922 s. A partir de ese backup se copió un volumen aislado, se inició una segunda instancia PostgreSQL y se validaron servicio, 5.000.000 movimientos, ledger neto 0 y tenant B en 0. El recovery completo tardó **15,302 s**, por lo que el RTO local menor a 60 s quedó aprobado para este método.
 
-La regla de replicación SCRAM utilizada fue temporal, restringida al usuario del drill y eliminada automáticamente. Esta evidencia no certifica todavía RPO 5 min: falta configurar y probar archivado WAL/PITR o snapshots continuos en infraestructura equivalente al piloto.
+La regla de replicación SCRAM utilizada fue temporal, restringida al usuario del drill y a la red del stack, y eliminada automáticamente.
+
+## Archivado WAL y recuperación PITR
+
+PostgreSQL quedó configurado con `archive_mode=on`, `wal_level=replica`, `archive_timeout=60s` y un volumen de archivo WAL separado del volumen de datos. El drill tomó un backup base, generó transacciones antes y después de un punto elegido y levantó una instancia aislada mediante `recovery.signal`.
+
+| Comprobación | Resultado |
+|---|---:|
+| Backup base para PITR | 5,632 s |
+| Recuperación al punto y readiness | 6,585 s |
+| RPO observado | 2,313 s |
+| Objetivo RPO | ≤ 300 s — aprobado |
+| Objetivo RTO | < 60 s — aprobado |
+| Registro baseline recuperado | Sí |
+| Registro previo al target recuperado | Sí |
+| Registro posterior al target excluido | Sí |
+
+La evidencia local aprueba el mecanismo y los gates RPO/RTO. En el piloto se deberá conservar el archivo WAL fuera del host, aplicar retención/alertas y repetir el drill sobre almacenamiento y red equivalentes a producción.

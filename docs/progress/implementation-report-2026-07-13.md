@@ -2,7 +2,7 @@
 
 ## Estado
 
-Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Hardening y piloto pendientes de ambiente, hardware y ERP reales.
+Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Los gates locales de volumen, carga web/móvil, RTO y RPO están aprobados; el cierre del piloto depende del ambiente, hardware y ERP reales.
 
 ## Documentación
 
@@ -34,17 +34,19 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 | Carga k6 | Correcta: 100 VUs, 27.165 iteraciones, lecturas p95 371,62 ms y batch de 100 comandos p95 2,16 s |
 | Volumen histórico | 5.000.000 movimientos; últimos 100 en 0,321 ms y lookup idempotente en 0,165 ms |
 | Carga sobre volumen histórico | 32.348 iteraciones; lectura p95 289,83 ms y batch p95 4,49 s |
+| Carga web concurrente | 30 usuarios, 6.607 consultas, 0 errores y dashboard p95 449,71 ms |
 | Restore lógico aislado | Integridad correcta; RTO no aprobado: 60,615–71,805 s para objetivo < 60 s |
 | Recovery físico aislado | `pg_basebackup` 19,922 s; recuperación y validación en 15,302 s, RTO < 60 s aprobado localmente |
+| WAL/PITR aislado | backup base 5,632 s; recuperación en 6,585 s; RPO observado 2,313 s y exclusión post-target correcta |
 
 ## Riesgos abiertos
 
 - La aplicación Android no pudo compilarse en esta estación porque el Android SDK/Gradle wrapper no están disponibles dentro del workspace; CI instala Gradle y el proyecto declara sus versiones.
-- La carga de 100 dispositivos, batch móvil y cinco millones de movimientos históricos quedó demostrada; aún faltan 30 usuarios web concurrentes.
-- El restore lógico no cumple de forma estable el RTO, pero el recovery físico sí lo hizo en 15,302 s. RPO/PITR, disponibilidad mensual y conmutación blue/green siguen pendientes en ambiente de piloto.
+- La carga de 100 dispositivos, batch móvil, 30 usuarios web y cinco millones de movimientos históricos quedó demostrada localmente; debe repetirse en infraestructura equivalente al piloto.
+- El restore lógico no cumple de forma estable el RTO, pero recovery físico y PITR cumplieron localmente RTO/RPO. Disponibilidad mensual y conmutación blue/green siguen pendientes en ambiente de piloto.
 - La compatibilidad Zebra/DataWedge y la ergonomía con guantes requieren prueba física.
 - El mock ERP valida entrega y cabeceras firmadas; el cierre del piloto requiere repetir contra el ERP real o sandbox.
 
 ## Próximo paso único
 
-Configurar archivado WAL/PITR y demostrar RPO menor o igual a 5 minutos sobre la estrategia física ya validada antes de la UAT.
+Ejecutar y documentar una conmutación blue/green con rollback de API/worker antes de la UAT.

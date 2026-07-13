@@ -25,6 +25,7 @@ Datos de prueba son sintéticos y deterministas. Cada test porta su ID de trazab
 | TEST-OUT-0001 | pedido → FIFO → pick → pack → ship | reserva consumida y confirmación única |
 | TEST-OUT-0002 | short pick | motivo, aprobación y cantidad trazables |
 | TEST-OPS-0001 | restore PITR | RPO/RTO y checks de integridad cumplidos |
+| TEST-OPS-0002 | 100 dispositivos + 30 usuarios web sobre ≥5M movimientos | p95/batch/error dentro de gate y cero invariantes rotas |
 
 ## Rendimiento
 

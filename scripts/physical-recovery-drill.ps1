@@ -49,7 +49,7 @@ try {
     if (-not $sourceContainer) { throw "PostgreSQL container is not running for project $ProjectName." }
     $hbaPath = (& docker exec $sourceContainer psql --username $envMap.POSTGRES_USER --dbname $envMap.POSTGRES_DB --no-align --tuples-only --command "SHOW hba_file;" | Out-String).Trim()
     if (-not $hbaPath) { throw "Could not resolve pg_hba.conf path." }
-    & docker exec $sourceContainer sh -c "echo 'host replication $($envMap.POSTGRES_USER) 0.0.0.0/0 scram-sha-256 # wms-physical-drill' >> '$hbaPath'"
+    & docker exec $sourceContainer sh -c "echo 'host replication $($envMap.POSTGRES_USER) samenet scram-sha-256 # wms-physical-drill' >> '$hbaPath'"
     if ($LASTEXITCODE -ne 0) { throw "Could not add temporary replication access." }
     $hbaModified = $true
     & docker exec $sourceContainer psql --username $envMap.POSTGRES_USER --dbname $envMap.POSTGRES_DB --set ON_ERROR_STOP=1 --command "SELECT pg_reload_conf();" | Out-Null

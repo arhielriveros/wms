@@ -14,6 +14,7 @@
 | EPIC-WMS-0001 | FEATURE-MOB-0001 | STORY-MOB-0001 | UC-MOB-0001 | RULE-MOB-0001 | API-MOB-0003 | EVENT-MOB-0001 | MobileCommand | assigned task scope | TEST-MOB-0002 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-SEC-0001 | STORY-SEC-0001 | UC-SEC-0001 | RULE-SEC-0001 | todas | EVENT-SEC-0001 | AuditRecord | RBAC+scopes | TEST-SEC-0001 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0001 | UC-OPS-0001 | RULE-OPS-0001 | health/readiness | eventos técnicos | Backup | ops privileged | TEST-OPS-0001 | TBD | TBD | Documentado |
+| EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0002 | UC-OPS-0002 | RULE-OPS-0002 | API-MOB-0002 / dashboard | eventos técnicos | Métricas | ops privileged | TEST-OPS-0002 | TBD | TBD | Documentado |
 
 ## Reglas normativas iniciales
 
@@ -26,5 +27,6 @@
 - `RULE-MOB-0001`: conflicto offline no se resuelve por last-write-wins.
 - `RULE-SEC-0001`: autorización efectiva combina rol y scopes contextuales.
 - `RULE-OPS-0001`: recuperación sólo se declara cuando integridad y smoke están verificados.
+- `RULE-OPS-0002`: el piloto sólo se libera cuando carga móvil/web y volumen histórico cumplen los umbrales acordados.
 
 La matriz se actualiza en cada PR y release. CI validará formato/referencias; el owner funcional valida semántica.

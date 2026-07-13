@@ -19,9 +19,20 @@ Feature flags habilitan shadow mode → zona controlada → full. Cada flag tien
 
 PostgreSQL: full diario, WAL/PITR continuo para RPO 5 min, cifrado y copia fuera del host. S3: versionado/retención. Keycloak y configuración de broker/observabilidad se exportan versionados sin secretos. Se verifican checksums y fallos alertan.
 
+La baseline Compose activa `wal_level=replica`, `archive_mode=on` y `archive_timeout=60s`. Los WAL se escriben en un volumen distinto de `PGDATA`; en piloto ese destino debe sustituirse o replicarse hacia almacenamiento duradero fuera del host, con retención, cifrado, capacidad y alertas supervisadas.
+
 ## Restore
 
 Mensualmente en ambiente aislado: restaurar a punto elegido, validar migraciones, tenants, conteos/ledger-saldo, Inbox/Outbox, evidencia, autenticación y smoke inbound/outbound. Medir RTO desde declaración hasta servicio verificado. Guardar acta `TEST-OPS-0001`.
+
+Los gates locales reproducibles son:
+
+```powershell
+./scripts/physical-recovery-drill.ps1
+./scripts/pitr-recovery-drill.ps1
+```
+
+El segundo crea un acceso de replicación SCRAM temporal limitado a la red Compose, ejecuta `pg_basebackup`, restaura hasta un timestamp elegido y comprueba que la transacción anterior exista y la posterior no. Los contenedores, volúmenes y regla temporal se eliminan incluso ante error; el manifiesto JSON queda en `.backups`.
 
 ## Runbook de degradación ERP
 

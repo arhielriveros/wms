@@ -3,6 +3,23 @@ name: wms-smoke
 services:
   postgres:
     image: postgres:17-alpine
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        chown postgres:postgres /wal-archive
+        exec docker-entrypoint.sh "$$@"
+      - --
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_timeout=60s
+      - -c
+      - archive_command=test ! -f /wal-archive/%f && cp %p /wal-archive/%f
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
@@ -11,6 +28,7 @@ services:
       WMS_WORKER_DB_PASSWORD: ${WMS_WORKER_DB_PASSWORD:?set WMS_WORKER_DB_PASSWORD}
     volumes:
       - smoke-postgres-data:/var/lib/postgresql/data
+      - smoke-wal-archive:/wal-archive
       - ./infra/postgres/init/001-foundation.sql:/docker-entrypoint-initdb.d/001-foundation.sql:ro
       - ./src/backend/database/001_initial.sql:/docker-entrypoint-initdb.d/002-mvp.sql:ro
       - ./infra/postgres/init/003-runtime-users.sh:/docker-entrypoint-initdb.d/003-runtime-users.sh:ro
@@ -87,3 +105,4 @@ services:
 
 volumes:
   smoke-postgres-data:
+  smoke-wal-archive:

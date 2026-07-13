@@ -18,16 +18,18 @@
 - Carga móvil repetida sobre 5M: 32.348 iteraciones, lectura p95 289,83 ms y batch p95 4,49 s.
 - Recovery lógico aislado automatizado con checksum y validación de integridad; RTO lógico identificado como no conforme y convertido en gate ejecutable.
 - Recovery físico automatizado con `pg_basebackup`: clúster de 1,986 GB respaldado en 19,922 s y restaurado/validado en 15,302 s, cumpliendo RTO local menor a 60 s.
+- Carga de supervisión aprobada con 30 usuarios concurrentes: 6.607 consultas, 0 errores y p95 449,71 ms.
+- WAL continuo y PITR automatizados: recuperación aislada al punto elegido en 6,585 s, RPO observado 2,313 s y transacción posterior correctamente excluida.
 
 ## Pendiente para cerrar Hito 4
 
 - Integración con el stack completo de observabilidad, Keycloak, RabbitMQ, Redis y MinIO en un ambiente de piloto.
 - Pruebas ampliadas de IDOR, revocación y escalada contra Keycloak real; el aislamiento tenant del slice E2E ya está cubierto con PostgreSQL/RLS.
-- Carga restante con 30 usuarios web; los 100 dispositivos, batches móviles y cinco millones históricos ya cumplen los umbrales.
-- Archivado WAL/PITR para certificar RPO 5 min; el RTO físico ya cumple localmente, mientras el restore lógico no lo hace de forma estable. También falta conmutación blue/green.
+- Repetición de carga web/móvil y volumen histórico en infraestructura equivalente al piloto; los umbrales ya cumplen localmente.
+- Repetición del recovery físico/PITR con archivo WAL externo en el ambiente piloto y conmutación blue/green; RPO/RTO ya cumplen localmente, mientras el restore lógico no lo hace de forma estable.
 - UAT física de escaneo, sonido, vibración, contraste y guantes en Zebra.
 - Evidencia de ERP real/sandbox, firma de webhooks y reconciliación operacional.
 
 ## Resultado
 
-La baseline ejecutable de Fase 0 + MVP está implementada y validada estática y dinámicamente para los slices principales. Los objetivos móviles iniciales de latencia están demostrados; no corresponde declarar todavía disponibilidad mensual, RPO/RTO, rendimiento histórico ni compatibilidad física hasta reunir esas evidencias.
+La baseline ejecutable de Fase 0 + MVP está implementada y validada estática y dinámicamente para los slices principales. Los objetivos locales de carga, volumen, RPO y RTO están demostrados; no corresponde declarar todavía disponibilidad mensual ni compatibilidad física hasta repetir los gates en el piloto y reunir evidencias externas.

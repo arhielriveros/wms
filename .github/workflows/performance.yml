@@ -19,12 +19,17 @@ jobs:
         run: ./scripts/historical-volume.ps1
       - name: Run 100-device and command-batch load over historical volume
         run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml --profile load run --rm load-test
+      - name: Run 30-user supervisor dashboard load
+        run: docker compose --env-file .env.example --project-name wms-smoke --file docker-compose.smoke.yml --profile load run --rm load-test run /scripts/web-dashboard.js
       - name: Run isolated logical recovery drill
         shell: pwsh
         run: ./scripts/recovery-drill.ps1
       - name: Run physical recovery RTO gate
         shell: pwsh
         run: ./scripts/physical-recovery-drill.ps1
+      - name: Run WAL/PITR RPO gate
+        shell: pwsh
+        run: ./scripts/pitr-recovery-drill.ps1
       - name: Upload recovery evidence
         if: always()
         uses: actions/upload-artifact@v4

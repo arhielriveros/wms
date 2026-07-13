@@ -36,6 +36,14 @@ Prueba de 100 dispositivos y batches de 100 comandos:
 docker compose --env-file .env --project-name wms-smoke --file docker-compose.smoke.yml --profile load run --rm load-test
 ```
 
+Carga de 30 supervisores y drills de recuperación física/PITR:
+
+```powershell
+docker compose --env-file .env --project-name wms-smoke --file docker-compose.smoke.yml --profile load run --rm load-test run /scripts/web-dashboard.js
+./scripts/physical-recovery-drill.ps1
+./scripts/pitr-recovery-drill.ps1
+```
+
 Validación local sin levantar contenedores:
 
 ```powershell
@@ -70,4 +78,4 @@ La API pública vive bajo `/api/v1`. En desarrollo local puede usarse el esquema
 
 ## Límites de esta entrega
 
-No se declara el piloto productivo hasta completar pruebas con 100 dispositivos/30 usuarios web, cinco millones de movimientos, restore real, failover blue/green, UAT física Zebra y reconciliación contra un ERP real. Lotes, series, HU/GS1 avanzado, olas, reposición, devoluciones y optimización permanecen fuera del MVP.
+Los gates locales con 100 dispositivos, 30 usuarios web, cinco millones de movimientos y recuperación física/PITR están aprobados. No se declara el piloto productivo hasta repetirlos en infraestructura equivalente, completar failover blue/green, UAT física Zebra y reconciliación contra un ERP real. Lotes, series, HU/GS1 avanzado, olas, reposición, devoluciones y optimización permanecen fuera del MVP.

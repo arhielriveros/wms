@@ -4,7 +4,7 @@
 
 - **Fase:** 4 — Hardening y piloto
 - **Hito activo:** Integración/E2E en ambiente de piloto
-- **Estado:** Baseline y E2E local aprobados; hardening histórico, recuperación y evidencias físicas pendientes
+- **Estado:** Baseline, E2E, volumen, carga y recuperación local aprobados; certificación en piloto pendiente
 - **Fecha de corte:** 2026-07-13
 - **Gate F0:** Aprobado por revisión multidisciplinaria y autorización explícita del Product Owner.
 
@@ -16,7 +16,7 @@
 | H1 Fundación | monorepo, Compose, CI, seguridad, auditoría y telemetría | Baseline implementada |
 | H2 Inbound | contratos, importación, tareas, stock, sync y confirmación | Baseline implementada |
 | H3 Outbound | pedido, reserva FIFO, picking, packing/despacho y Outbox | Baseline implementada |
-| H4 Hardening/piloto | carga, restore, Zebra, ERP y UAT | Parcial: E2E, 5M, carga y RTO físico aprobados; RPO/PITR pendiente |
+| H4 Hardening/piloto | carga, restore, Zebra, ERP y UAT | Parcial: E2E, 5M, carga web/móvil y RPO/RTO aprobados localmente |
 
 ## Observaciones resueltas
 
@@ -30,6 +30,8 @@
 - Cinco millones de movimientos validados; con el volumen presente, lectura móvil p95 289,83 ms y batch p95 4,49 s.
 - Recovery lógico íntegro pero variable entre 60,615 y 71,805 s; no certifica RTO menor a 60 s.
 - Recovery físico con `pg_basebackup` aprobado: backup 19,922 s y servicio restaurado/validado en 15,302 s.
+- Carga web validada con 30 usuarios: 6.607 consultas, 0 errores y dashboard p95 449,71 ms.
+- Archivado WAL/PITR aprobado localmente: backup base 5,632 s, recovery 6,585 s, RPO observado 2,313 s y transacción post-target excluida.
 
 ## Dependencias para piloto
 
@@ -37,4 +39,4 @@ Permanecen activos `BLK-UAT-0001` (hardware/red Zebra) y `BLK-UAT-0002` (sandbox
 
 ## Próximo paso único
 
-Configurar archivado WAL/PITR y demostrar RPO menor o igual a 5 minutos sobre el recovery físico validado.
+Ejecutar y documentar la conmutación blue/green y su rollback para API/worker.
