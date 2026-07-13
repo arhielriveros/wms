@@ -50,6 +50,12 @@ Conmutación blue/green y rollback con tráfico continuo:
 ./scripts/blue-green-drill.ps1
 ```
 
+Gate de seguridad con Keycloak real, dos tenants y revocación inmediata:
+
+```powershell
+./scripts/keycloak-security-drill.ps1
+```
+
 Validación local sin levantar contenedores:
 
 ```powershell
@@ -84,4 +90,4 @@ La API pública vive bajo `/api/v1`. En desarrollo local puede usarse el esquema
 
 ## Límites de esta entrega
 
-Los gates locales con 100 dispositivos, 30 usuarios web, cinco millones de movimientos y recuperación física/PITR están aprobados. No se declara el piloto productivo hasta repetirlos en infraestructura equivalente, completar failover blue/green, UAT física Zebra y reconciliación contra un ERP real. Lotes, series, HU/GS1 avanzado, olas, reposición, devoluciones y optimización permanecen fuera del MVP.
+Los gates locales con 100 dispositivos, 30 usuarios web, cinco millones de movimientos, recuperación física/PITR, blue/green y seguridad Keycloak están aprobados. No se declara el piloto productivo hasta repetirlos en infraestructura equivalente, completar UAT física Zebra y reconciliación contra un ERP real. Lotes, series, HU/GS1 avanzado, olas, reposición, devoluciones y optimización permanecen fuera del MVP.

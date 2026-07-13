@@ -2,11 +2,11 @@
 
 ## Estado
 
-Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Los gates locales de volumen, carga web/móvil, RTO/RPO y blue/green están aprobados; el cierre del piloto depende del ambiente, hardware y ERP reales.
+Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound implementadas. Los gates locales de volumen, carga web/móvil, RTO/RPO, blue/green y seguridad Keycloak están aprobados; el cierre del piloto depende del ambiente, hardware y ERP reales.
 
 ## Documentación
 
-- 229 documentos no vacíos.
+- 230 documentos no vacíos.
 - 11 módulos activos con dossier funcional, técnico, UX, seguridad, observabilidad y pruebas.
 - ADR-0001..0008 aceptados y matriz de trazabilidad validada por CI.
 
@@ -16,7 +16,7 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 - Web Next.js: dashboard operacional responsive y estados degradados explícitos.
 - Android/Kotlin: caché Room, cola de comandos, sincronización WorkManager y fuentes de escaneo.
 - Infraestructura local: 16 servicios/componentes de datos, mensajería, identidad, objetos, mock ERP, telemetría, aplicaciones y carga.
-- Automatización: nueve workflows, smoke E2E, carga k6, validadores documentales, backup/restore y gate blue/green.
+- Automatización: diez workflows, smoke E2E, carga k6, validadores documentales, backup/restore, blue/green y gate Keycloak.
 - Ejecución física conectada: tareas Inbound/Outbound, transacciones multi-schema, auditoría, short pick controlado y confirmaciones ERP.
 
 ## Evidencias locales
@@ -24,7 +24,7 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 | Comprobación | Resultado |
 |---|---|
 | `dotnet build src/backend/Wms.Backend.slnx --no-restore` | Correcto, 0 warnings, 0 errores |
-| Pruebas backend | 14/14 correctas (dominio + arquitectura) |
+| Pruebas backend | 19/19 correctas (dominio + arquitectura + permisos de token) |
 | `npm run web:typecheck` | Correcto |
 | `npm run web:build` | Correcto |
 | `npm audit --audit-level=moderate` | 0 vulnerabilidades |
@@ -39,6 +39,7 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 | Recovery físico aislado | `pg_basebackup` 19,922 s; recuperación y validación en 15,302 s, RTO < 60 s aprobado localmente |
 | WAL/PITR aislado | backup base 5,632 s; recuperación en 6,585 s; RPO observado 2,313 s y exclusión post-target correcta |
 | Blue/green aislado | switch green 1,553 s; rollback blue 1,296 s; 178 solicitudes y 0 fallos; ambos workers activos |
+| Seguridad Keycloak aislada | 8/8 controles correctos: 401 sin token, 200 autorizado, 403 escalada, 404 IDOR, 200 recurso propio, 401 adulteración, 200 activo y 401 revocado |
 
 ## Riesgos abiertos
 
@@ -50,4 +51,4 @@ Fase 0 aprobada. Fundación técnica y baseline funcional de Inbound/Outbound im
 
 ## Próximo paso único
 
-Ampliar el gate de seguridad contra Keycloak real con IDOR, escalada de privilegios y revocación de tokens.
+Ejecutar el gate de observabilidad de punta a punta con API, worker, RabbitMQ, Redis, MinIO y el stack OpenTelemetry completos.

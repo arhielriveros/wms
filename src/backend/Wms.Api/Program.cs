@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -50,6 +51,8 @@ builder.Services.AddScoped<IIntegrationIngestionService, IntegrationIngestionSer
 builder.Services.AddScoped<IMobileCommandProcessor, MobileCommandProcessor>();
 builder.Services.AddScoped<IOutboundOperations, OutboundOperationsService>();
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.AddHttpClient("token-introspection");
+builder.Services.AddSingleton<KeycloakTokenIntrospector>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -62,23 +65,49 @@ builder.Services.AddAuthentication(options =>
 {
     options.Authority = builder.Configuration["Authentication:Authority"];
     options.Audience = builder.Configuration["Authentication:Audience"] ?? "wms-api";
-    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+    options.RequireHttpsMetadata = builder.Configuration.GetValue("Authentication:RequireHttpsMetadata", !builder.Environment.IsDevelopment());
+    options.MapInboundClaims = false;
+    options.TokenValidationParameters.ValidAlgorithms = [SecurityAlgorithms.RsaSha256];
+    options.TokenValidationParameters.ClockSkew = TimeSpan.FromSeconds(30);
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var authorization = context.Request.Headers.Authorization.ToString();
+            if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                context.Fail("Bearer token is missing.");
+                return;
+            }
+            try
+            {
+                var active = await context.HttpContext.RequestServices.GetRequiredService<KeycloakTokenIntrospector>()
+                    .IsActiveAsync(authorization[7..].Trim(), context.HttpContext.RequestAborted);
+                if (!active) context.Fail("Bearer token is inactive.");
+            }
+            catch
+            {
+                context.Fail("Bearer token introspection failed.");
+            }
+        }
+    };
 }).AddScheme<AuthenticationSchemeOptions, DevelopmentHeaderAuthenticationHandler>("dev-headers", _ => { });
 
 builder.Services.AddAuthorization(options =>
 {
-    static bool HasScope(ClaimsPrincipal user, string scope) => user.FindAll("scope").SelectMany(x => x.Value.Split(' ')).Contains(scope, StringComparer.Ordinal);
-    options.AddPolicy("integration.ingest", p => p.RequireAssertion(c => HasScope(c.User, "wms.integration.ingest")));
-    options.AddPolicy("integration.read", p => p.RequireAssertion(c => HasScope(c.User, "wms.integration.read")));
-    options.AddPolicy("mobile.read", p => p.RequireAssertion(c => HasScope(c.User, "wms.task.read_assigned")));
-    options.AddPolicy("mobile.execute", p => p.RequireAssertion(c => HasScope(c.User, "wms.task.execute")));
-    options.AddPolicy("inventory.read", p => p.RequireAssertion(c => HasScope(c.User, "wms.inventory.read")));
-    options.AddPolicy("supervisor.read", p => p.RequireAssertion(c => HasScope(c.User, "wms.supervisor.read")));
-    options.AddPolicy("outbound.release", p => p.RequireAssertion(c => HasScope(c.User, "wms.outbound.release")));
-    options.AddPolicy("outbound.pack", p => p.RequireAssertion(c => HasScope(c.User, "wms.outbound.pack")));
-    options.AddPolicy("outbound.dispatch", p => p.RequireAssertion(c => HasScope(c.User, "wms.outbound.dispatch")));
-    options.AddPolicy("outbound.read", p => p.RequireAssertion(c => HasScope(c.User, "wms.outbound.read")));
-    options.AddPolicy("inbound.read", p => p.RequireAssertion(c => HasScope(c.User, "wms.inbound.read")));
+    var audience = builder.Configuration["Authentication:Audience"] ?? "wms-api";
+    bool HasPermission(ClaimsPrincipal user, string permission) => TokenPermissionEvaluator.HasPermission(user, permission, audience);
+    options.AddPolicy("integration.ingest", p => p.RequireAssertion(c => HasPermission(c.User, "wms.integration.ingest")));
+    options.AddPolicy("integration.read", p => p.RequireAssertion(c => HasPermission(c.User, "wms.integration.read")));
+    options.AddPolicy("mobile.read", p => p.RequireAssertion(c => HasPermission(c.User, "wms.task.read_assigned")));
+    options.AddPolicy("mobile.execute", p => p.RequireAssertion(c => HasPermission(c.User, "wms.task.execute")));
+    options.AddPolicy("inventory.read", p => p.RequireAssertion(c => HasPermission(c.User, "wms.inventory.read")));
+    options.AddPolicy("supervisor.read", p => p.RequireAssertion(c => HasPermission(c.User, "wms.supervisor.read")));
+    options.AddPolicy("outbound.release", p => p.RequireAssertion(c => HasPermission(c.User, "wms.outbound.release")));
+    options.AddPolicy("outbound.pack", p => p.RequireAssertion(c => HasPermission(c.User, "wms.outbound.pack")));
+    options.AddPolicy("outbound.dispatch", p => p.RequireAssertion(c => HasPermission(c.User, "wms.outbound.dispatch")));
+    options.AddPolicy("outbound.read", p => p.RequireAssertion(c => HasPermission(c.User, "wms.outbound.read")));
+    options.AddPolicy("inbound.read", p => p.RequireAssertion(c => HasPermission(c.User, "wms.inbound.read")));
 });
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), tags: ["ready"]);
@@ -113,7 +142,7 @@ app.Use(async (context, next) =>
         var correlation = context.Request.Headers.TryGetValue("X-Correlation-Id", out var value) && Guid.TryParse(value, out var parsed) ? parsed : Guid.NewGuid();
         context.Items["CorrelationId"] = correlation;
         context.Response.Headers["X-Correlation-Id"] = correlation.ToString();
-        context.RequestServices.GetRequiredService<TenantContext>().Resolve(tenantId, context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown", correlation, context.User.FindFirstValue("warehouse"));
+        context.RequestServices.GetRequiredService<TenantContext>().Resolve(tenantId, context.User.FindFirstValue("sub") ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown", correlation, context.User.FindFirstValue("warehouse_ids"));
     }
     await next();
 });

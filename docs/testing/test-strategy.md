@@ -14,6 +14,7 @@ Datos de prueba son sintéticos y deterministas. Cada test porta su ID de trazab
 | ID | Escenario | Aserción crítica |
 |---|---|---|
 | TEST-SEC-0001 | Tenant A intenta leer/escribir B | 0 datos/efectos y auditoría de rechazo |
+| TEST-SEC-0002 | Token Keycloak real: RBAC, IDOR, adulteración y logout | 401/403/404 correctos, acceso propio permitido y token revocado rechazado |
 | TEST-INT-0001 | ASN repetido | un documento y un efecto |
 | TEST-INT-0002 | mismo MessageId, payload distinto | conflicto, ningún efecto adicional |
 | TEST-INV-0001 | dos reservas sobre el mismo saldo | sin stock negativo/sobreasignación |

@@ -23,26 +23,7 @@
       "name": "WMS API",
       "enabled": true,
       "bearerOnly": true,
-      "protocol": "openid-connect",
-      "roles": [
-        {"name": "wms.task.read_assigned"},
-        {"name": "wms.task.execute"},
-        {"name": "wms.task.reassign"},
-        {"name": "wms.receipt.execute"},
-        {"name": "wms.putaway.execute"},
-        {"name": "wms.pick.execute"},
-        {"name": "wms.short_pick.approve"},
-        {"name": "wms.pack.execute"},
-        {"name": "wms.shipment.dispatch"},
-        {"name": "wms.inventory.read"},
-        {"name": "wms.layout.manage"},
-        {"name": "wms.master.manage"},
-        {"name": "wms.integration.ingest"},
-        {"name": "wms.integration.read"},
-        {"name": "wms.integration.reprocess"},
-        {"name": "wms.audit.read"},
-        {"name": "wms.security.manage"}
-      ]
+      "protocol": "openid-connect"
     },
     {
       "clientId": "wms-web",
@@ -55,7 +36,7 @@
       "redirectUris": ["http://localhost:3000/*"],
       "webOrigins": ["http://localhost:3000"],
       "attributes": {"pkce.code.challenge.method": "S256"},
-      "defaultClientScopes": ["profile", "email", "roles", "web-origins", "wms-context"]
+      "defaultClientScopes": ["wms-context", "wms-api-access"]
     },
     {
       "clientId": "wms-mobile",
@@ -67,7 +48,7 @@
       "protocol": "openid-connect",
       "redirectUris": ["com.wms.mobile:/oauth2redirect"],
       "attributes": {"pkce.code.challenge.method": "S256"},
-      "defaultClientScopes": ["profile", "roles", "wms-context"]
+      "defaultClientScopes": ["wms-context", "wms-api-access"]
     }
   ],
   "clientScopes": [
@@ -102,6 +83,26 @@
           "config": {"user.attribute": "zone_ids", "claim.name": "zone_ids", "jsonType.label": "String", "access.token.claim": "true", "multivalued": "true"}
         }
       ]
+    },
+    {
+      "name": "wms-api-access",
+      "description": "Audience and WMS API client roles required by web and mobile clients.",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "false", "display.on.consent.screen": "false"},
+      "protocolMappers": [
+        {
+          "name": "wms-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {"included.client.audience": "wms-api", "access.token.claim": "true", "id.token.claim": "false", "introspection.token.claim": "true"}
+        },
+        {
+          "name": "wms-api-client-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "config": {"claim.name": "resource_access.${client_id}.roles", "multivalued": "true", "jsonType.label": "String", "access.token.claim": "true", "id.token.claim": "false", "introspection.token.claim": "true"}
+        }
+      ]
     }
   ],
   "roles": {
@@ -116,7 +117,7 @@
         "composite": true,
         "composites": {
           "realm": ["wms-operator"],
-          "client": {"wms-api": ["wms.task.reassign", "wms.short_pick.approve", "wms.pack.execute", "wms.shipment.dispatch", "wms.inventory.read", "wms.integration.read"]}
+          "client": {"wms-api": ["wms.task.reassign", "wms.short_pick.approve", "wms.pack.execute", "wms.shipment.dispatch", "wms.inventory.read", "wms.supervisor.read", "wms.inbound.read", "wms.outbound.read", "wms.outbound.release", "wms.outbound.pack", "wms.outbound.dispatch", "wms.integration.read"]}
         }
       },
       {
@@ -144,7 +145,34 @@
         "composite": true,
         "composites": {"client": {"wms-api": ["wms.integration.read", "wms.integration.reprocess"]}}
       }
-    ]
+    ],
+    "client": {
+      "wms-api": [
+        {"name": "wms.task.read_assigned"},
+        {"name": "wms.task.execute"},
+        {"name": "wms.task.reassign"},
+        {"name": "wms.receipt.execute"},
+        {"name": "wms.putaway.execute"},
+        {"name": "wms.pick.execute"},
+        {"name": "wms.short_pick.approve"},
+        {"name": "wms.pack.execute"},
+        {"name": "wms.shipment.dispatch"},
+        {"name": "wms.inventory.read"},
+        {"name": "wms.supervisor.read"},
+        {"name": "wms.inbound.read"},
+        {"name": "wms.outbound.read"},
+        {"name": "wms.outbound.release"},
+        {"name": "wms.outbound.pack"},
+        {"name": "wms.outbound.dispatch"},
+        {"name": "wms.layout.manage"},
+        {"name": "wms.master.manage"},
+        {"name": "wms.integration.ingest"},
+        {"name": "wms.integration.read"},
+        {"name": "wms.integration.reprocess"},
+        {"name": "wms.audit.read"},
+        {"name": "wms.security.manage"}
+      ]
+    }
   },
   "requiredActions": [
     {"alias": "CONFIGURE_TOTP", "name": "Configure OTP", "providerId": "CONFIGURE_TOTP", "enabled": true, "defaultAction": false, "priority": 10}

@@ -40,3 +40,4 @@ TestResults/
 *.log
 docker-data/
 .runtime/
+graphify-out/

@@ -1,0 +1,82 @@
+name: wms-security
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      WMS_API_DB_PASSWORD: ${WMS_API_DB_PASSWORD:?set WMS_API_DB_PASSWORD}
+      WMS_WORKER_DB_PASSWORD: ${WMS_WORKER_DB_PASSWORD:?set WMS_WORKER_DB_PASSWORD}
+    volumes:
+      - security-postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init/001-foundation.sql:/docker-entrypoint-initdb.d/001-foundation.sql:ro
+      - ./src/backend/database/001_initial.sql:/docker-entrypoint-initdb.d/002-mvp.sql:ro
+      - ./infra/postgres/init/003-runtime-users.sh:/docker-entrypoint-initdb.d/003-runtime-users.sh:ro
+      - ./infra/postgres/init/004-pilot-seed.sql:/docker-entrypoint-initdb.d/004-pilot-seed.sql:ro
+      - ./infra/postgres/init/005-security-seed.sql:/docker-entrypoint-initdb.d/005-security-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    command: ["start-dev", "--import-realm", "--health-enabled=true"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:?set KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?set KEYCLOAK_ADMIN_PASSWORD}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_DB_SCHEMA: keycloak
+      KC_HTTP_PORT: 8080
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "${SECURITY_KEYCLOAK_PORT:-18083}:8080"
+    volumes:
+      - ./infra/keycloak/realm-wms-dev.json:/opt/keycloak/data/import/realm-wms-dev.json:ro
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec 'exec 3<>/dev/tcp/127.0.0.1/9000; printf \"GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3; grep -q \"200 OK\" <&3'"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+      args:
+        WMS_PROJECT: Wms.Api
+    environment:
+      ASPNETCORE_ENVIRONMENT: SecurityTest
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Wms: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=wms_app;Password=${WMS_API_DB_PASSWORD}
+      Authentication__Authority: http://host.docker.internal:${SECURITY_KEYCLOAK_PORT:-18083}/realms/wms-dev
+      Authentication__Audience: wms-api
+      Authentication__RequireHttpsMetadata: "false"
+      Authentication__IntrospectionEnabled: "true"
+      Authentication__IntrospectionClientId: wms-security-drill
+      Authentication__IntrospectionClientSecret: ${WMS_SECURITY_CLIENT_SECRET:?set WMS_SECURITY_CLIENT_SECRET}
+    ports:
+      - "${SECURITY_API_PORT:-18084}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres: {condition: service_healthy}
+      keycloak: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ready"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
+
+volumes:
+  security-postgres-data:

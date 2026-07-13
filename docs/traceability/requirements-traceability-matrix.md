@@ -13,6 +13,7 @@
 | EPIC-WMS-0001 | FEATURE-INT-0001 | STORY-INT-0001 | UC-INT-0001 | RULE-INT-0001 | API-INT-0003 | EVENT-INB-0001 | Inbox/Outbox | wms.integration.read | TEST-INT-0001 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-MOB-0001 | STORY-MOB-0001 | UC-MOB-0001 | RULE-MOB-0001 | API-MOB-0003 | EVENT-MOB-0001 | MobileCommand | assigned task scope | TEST-MOB-0002 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-SEC-0001 | STORY-SEC-0001 | UC-SEC-0001 | RULE-SEC-0001 | todas | EVENT-SEC-0001 | AuditRecord | RBAC+scopes | TEST-SEC-0001 | TBD | TBD | Documentado |
+| EPIC-WMS-0001 | FEATURE-SEC-0001 | STORY-SEC-0002 | UC-SEC-0002 | RULE-SEC-0002 | todas | eventos de sesión OIDC | Token/Session | RS256+RBAC+introspection | TEST-SEC-0002 | TBD | TBD | Implementado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0001 | UC-OPS-0001 | RULE-OPS-0001 | health/readiness | eventos técnicos | Backup | ops privileged | TEST-OPS-0001 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0002 | UC-OPS-0002 | RULE-OPS-0002 | API-MOB-0002 / dashboard | eventos técnicos | Métricas | ops privileged | TEST-OPS-0002 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0003 | UC-OPS-0003 | RULE-OPS-0003 | health/readiness | eventos técnicos | DeploymentSlot | ops privileged | TEST-OPS-0003 | TBD | TBD | Implementado |
@@ -27,6 +28,7 @@
 - `RULE-INT-0001`: un fallo externo no revierte un hecho físico confirmado.
 - `RULE-MOB-0001`: conflicto offline no se resuelve por last-write-wins.
 - `RULE-SEC-0001`: autorización efectiva combina rol y scopes contextuales.
+- `RULE-SEC-0002`: fuera de Development sólo se aceptan claims firmados; un token revocado, adulterado o sin permiso/contexto válido se rechaza sin efecto.
 - `RULE-OPS-0001`: recuperación sólo se declara cuando integridad y smoke están verificados.
 - `RULE-OPS-0002`: el piloto sólo se libera cuando carga móvil/web y volumen histórico cumplen los umbrales acordados.
 - `RULE-OPS-0003`: el tráfico sólo conmuta después de validar API y worker; cualquier fallo preserva o restaura el slot anterior.

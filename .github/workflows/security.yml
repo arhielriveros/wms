@@ -1,0 +1,45 @@
+name: Keycloak Security CI
+
+on:
+  pull_request:
+    paths:
+      - "docker-compose.security.yml"
+      - "infra/keycloak/**"
+      - "infra/postgres/init/**"
+      - "scripts/keycloak-security-drill.ps1"
+      - "src/backend/Wms.Api/**"
+      - "src/backend/Wms.BuildingBlocks/**"
+      - "tests/backend/**"
+      - ".github/workflows/security.yml"
+  push:
+    branches: [master]
+    paths:
+      - "docker-compose.security.yml"
+      - "infra/keycloak/**"
+      - "infra/postgres/init/**"
+      - "scripts/keycloak-security-drill.ps1"
+      - "src/backend/Wms.Api/**"
+      - "src/backend/Wms.BuildingBlocks/**"
+      - "tests/backend/**"
+      - ".github/workflows/security.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  keycloak-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute real Keycloak security drill
+        shell: pwsh
+        run: ./scripts/keycloak-security-drill.ps1
+      - name: Upload redacted security evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: keycloak-security-evidence
+          path: .backups/wms-keycloak-security-*.json
+          if-no-files-found: error
+          retention-days: 30
