@@ -47,4 +47,4 @@ Web: app shell, tabla operativa virtualizable, KPI, filtros persistentes, timeli
 
 ## Accesibilidad y validación
 
-Teclado completo en web, labels programáticos, errores asociados al campo, live regions para sync/scan, reduced motion, targets táctiles, contraste AA y no depender de audio/vibración. Se prueba con lector, teclado, sol, modo oscuro, guantes y Zebra físico.
+Teclado completo en web, labels programáticos, errores asociados al campo, live regions para sync/scan, reduced motion, targets táctiles, contraste AA y no depender de audio/vibración. `TEST-UX-0001` bloquea regresiones automatizables en estados representativos; lector y zoom se revisan manualmente. La validación física sigue [Preparación UAT física Zebra y ergonomía móvil](../testing/zebra-uat-readiness.md).

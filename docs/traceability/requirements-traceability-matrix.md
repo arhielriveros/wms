@@ -18,6 +18,8 @@
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0002 | UC-OPS-0002 | RULE-OPS-0002 | API-MOB-0002 / dashboard | eventos técnicos | Métricas | ops privileged | TEST-OPS-0002 | TBD | TBD | Documentado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0003 | UC-OPS-0003 | RULE-OPS-0003 | health/readiness | eventos técnicos | DeploymentSlot | ops privileged | TEST-OPS-0003 | TBD | TBD | Implementado |
 | EPIC-WMS-0001 | FEATURE-OPS-0001 | STORY-OPS-0004 | UC-OPS-0004 | RULE-OPS-0004 | health/OTLP/Grafana APIs | señales técnicas | TelemetrySignal | ops privileged + redacted evidence | TEST-OPS-0004 | TBD | TBD | Implementado |
+| EPIC-WMS-0001 | FEATURE-PLT-0002 | STORY-PLT-0002 | UC-PLT-0002 | RULE-UX-0001 | API supervisor dashboard | sin evento | OperationsConsole | navegación por teclado + semántica | TEST-UX-0001 | TBD | TBD | Implementado |
+| EPIC-WMS-0001 | FEATURE-MOB-0001 | STORY-MOB-0003 | UC-MOB-0003 | RULE-MOB-0002 | API-MOB-0003 | EVENT-MOB-0001 | ZebraDevice/Task/Command | tarea asignada + sesión válida | TEST-MOB-0003 | TBD | TBD | Preparado; hardware pendiente |
 
 ## Reglas normativas iniciales
 
@@ -34,5 +36,7 @@
 - `RULE-OPS-0002`: el piloto sólo se libera cuando carga móvil/web y volumen histórico cumplen los umbrales acordados.
 - `RULE-OPS-0003`: el tráfico sólo conmuta después de validar API y worker; cualquier fallo preserva o restaura el slot anterior.
 - `RULE-OPS-0004`: un gate de observabilidad sólo se aprueba cuando API y worker producen métricas, trazas y logs consultables y sus checks operativos no persisten secretos.
+- `RULE-UX-0001`: la consola sólo supera el subgate automatizado si todos sus estados representativos carecen de violaciones axe WCAG 2.2 AA y la ruta de teclado conserva nombre, orden y foco visibles.
+- `RULE-MOB-0002`: la compatibilidad móvil física sólo se declara con evidencia por modelo/DataWedge/red; emulador y revisión de código no sustituyen la UAT Zebra.
 
 La matriz se actualiza en cada PR y release. CI validará formato/referencias; el owner funcional valida semántica.

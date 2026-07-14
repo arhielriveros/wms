@@ -9,6 +9,7 @@
     "web:dev": "npm --workspace @wms/supervisor-web run dev",
     "web:build": "npm --workspace @wms/supervisor-web run build",
     "web:typecheck": "npm --workspace @wms/supervisor-web run typecheck",
+    "web:accessibility": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/accessibility-gate.ps1",
     "backend:build": "dotnet build src/backend/Wms.Backend.slnx",
     "backend:test": "dotnet test src/backend/Wms.Backend.slnx --no-build",
     "validate:docs": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-docs.ps1 && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-traceability.ps1",

@@ -29,6 +29,8 @@ Datos de prueba son sintéticos y deterministas. Cada test porta su ID de trazab
 | TEST-OPS-0002 | 100 dispositivos + 30 usuarios web sobre ≥5M movimientos | p95/batch/error dentro de gate y cero invariantes rotas |
 | TEST-OPS-0003 | blue → green → rollback blue con tráfico continuo | API/worker healthy, slot previo preservado y cero respuestas fallidas |
 | TEST-OPS-0004 | stack completo API/worker + dependencias + LGTM | checks operativos y métricas/trazas/logs consultables para ambos servicios, sin secretos persistidos |
+| TEST-UX-0001 | consola ready/empty/error y 360 px con axe + teclado | cero violaciones en reglas WCAG 2.2 AA automatizables, contenido saltable, nombres y foco visibles |
+| TEST-MOB-0003 | DataWedge/cámara/offline/reinicio/feedback/sol/guantes en Zebra real | lectura inequívoca, cola durable, operación ergonómica y cero corrupción/duplicación |
 
 ## Rendimiento
 
@@ -40,7 +42,7 @@ RLS/IDOR, escalada, claims manipulados, replay, revocación, rate limit, inyecci
 
 ## Accesibilidad y hardware
 
-WCAG 2.2 AA automatizada más revisión manual de teclado, lector, foco, contraste y zoom. En Zebra real: DataWedge, cámara fallback, pérdida de red, reinicio, sonido/vibración, sol, guantes y jornada sostenida.
+`TEST-UX-0001` automatiza WCAG 2.2 AA con axe sobre estados ready/empty/error/responsive y un smoke de teclado; los resultados no concluyentes se revisan manualmente junto con lector, contraste y zoom. `TEST-MOB-0003` sigue el protocolo [Preparación UAT física Zebra y ergonomía móvil](zebra-uat-readiness.md) para DataWedge, cámara fallback, pérdida de red, reinicio, sonido/vibración, sol, guantes y jornada sostenida.
 
 ## Evidencia
 

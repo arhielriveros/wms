@@ -4,7 +4,7 @@
 
 - **Fase:** 4 — Hardening y piloto
 - **Hito activo:** Integración/E2E en ambiente de piloto
-- **Estado:** Baseline, E2E, volumen, carga, recuperación, blue/green, seguridad Keycloak y observabilidad E2E local aprobados; certificación en piloto pendiente
+- **Estado:** Baseline, E2E, volumen, carga, recuperación, blue/green, seguridad, observabilidad y accesibilidad web automatizada aprobados localmente; certificación física/piloto pendiente
 - **Fecha de corte:** 2026-07-13
 - **Gate F0:** Aprobado por revisión multidisciplinaria y autorización explícita del Product Owner.
 
@@ -16,7 +16,7 @@
 | H1 Fundación | monorepo, Compose, CI, seguridad, auditoría y telemetría | Baseline implementada |
 | H2 Inbound | contratos, importación, tareas, stock, sync y confirmación | Baseline implementada |
 | H3 Outbound | pedido, reserva FIFO, picking, packing/despacho y Outbox | Baseline implementada |
-| H4 Hardening/piloto | carga, restore, despliegue, seguridad, observabilidad, Zebra, ERP y UAT | Parcial: E2E, 5M, carga, RPO/RTO, blue/green, Keycloak y observabilidad aprobados localmente |
+| H4 Hardening/piloto | carga, restore, despliegue, seguridad, observabilidad, accesibilidad, Zebra, ERP y UAT | Parcial: E2E, 5M, carga, RPO/RTO, blue/green, Keycloak, observabilidad y WCAG automatizable aprobados localmente |
 
 ## Observaciones resueltas
 
@@ -35,6 +35,8 @@
 - Blue/green aprobado localmente: switch 1,553 s, rollback 1,296 s y 178 solicitudes continuas sin fallos, con ambos workers activos.
 - Seguridad Keycloak aprobada localmente: RBAC, IDOR, adulteración de claims y revocación inmediata con ocho controles HTTP correctos y cero secretos persistidos.
 - Observabilidad E2E aprobada localmente: dependencias operativas sanas, dashboard/datasources provisionados y métricas, trazas y logs consultables para API y worker sin secretos persistidos.
+- Accesibilidad web automatizada aprobada localmente: ready, empty, error y 360 px sin violaciones axe; skip link, nombres y foco por teclado verificados. Revisión humana sigue pendiente.
+- Protocolo `TEST-MOB-0003` preparado para DataWedge, cámara, offline/reinicio, sonido, vibración, sol, guantes y jornada sostenida; no ejecutado sin Zebra real.
 
 ## Dependencias para piloto
 
@@ -42,4 +44,4 @@ Permanecen activos `BLK-UAT-0001` (hardware/red Zebra) y `BLK-UAT-0002` (sandbox
 
 ## Próximo paso único
 
-Automatizar el gate web de accesibilidad WCAG 2.2 AA y documentar la preparación ergonómica móvil previa a la UAT física Zebra.
+Automatizar el gate agregado de readiness de release que reúna resultados H4, identifique bloqueos externos y emita una decisión local go/no-go sin sustituir las firmas UAT.

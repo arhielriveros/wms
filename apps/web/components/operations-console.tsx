@@ -63,6 +63,7 @@ export function OperationsConsole() {
 
   return (
     <main className="app-shell">
+      <a className="skip-link" href="#main-content">Saltar al contenido principal</a>
       <aside className="side-rail" aria-label="Navegación principal">
         <div className="brand-lockup" aria-label="WMS Control">
           <span className="brand-mark">W</span>
@@ -82,12 +83,12 @@ export function OperationsConsole() {
           ))}
         </nav>
         <div className="rail-footer">
-          <span className="live-dot" /> API / Worker
+          <span className="live-dot" aria-hidden="true" /> API / Worker
           <small>v0.1 · WH01</small>
         </div>
       </aside>
 
-      <section className="workspace">
+      <section className="workspace" id="main-content" tabIndex={-1}>
         <header className="command-bar">
           <div>
             <p className="eyebrow">{dashboard.warehouse.code} · TURNO ACTIVO</p>
@@ -98,7 +99,7 @@ export function OperationsConsole() {
               {viewState === "offline" ? "Sin conexión" : viewState === "error" ? "Datos no disponibles" : "Enlace operativo"}
             </div>
             <button className="refresh-button" onClick={() => void refresh()}>Actualizar</button>
-            <div className="avatar" aria-label="Supervisor AR">AR</div>
+            <div className="avatar" role="img" aria-label="Supervisor AR">AR</div>
           </div>
         </header>
 
@@ -145,8 +146,9 @@ export function OperationsConsole() {
             {dashboard.tasks.length === 0 ? (
               <EmptyState title="No hay tareas activas" detail="Libera un ASN o pedido para crear trabajo asignable." />
             ) : (
-              <div className="table-wrap">
+              <div className="table-wrap" role="region" aria-label="Tareas activas; desplazar horizontalmente para ver todas las columnas" tabIndex={0}>
                 <table>
+                  <caption className="sr-only">Tareas activas del turno</caption>
                   <thead><tr><th>Tipo</th><th>Referencia</th><th>Asignado</th><th>Prioridad</th><th>Estado</th><th>Actualizado</th></tr></thead>
                   <tbody>
                     {dashboard.tasks.slice(0, 7).map((task) => (
@@ -184,10 +186,11 @@ export function OperationsConsole() {
               <EmptyState title="Sin mensajes recientes" detail="Los ASN y pedidos entrantes aparecerán con su correlación." />
             ) : dashboard.integration.slice(0, 6).map((message) => (
               <article className="message-row" key={message.messageId}>
-                <span className={`message-state ${message.status.toLowerCase()}`} />
+                <span className={`message-state ${message.status.toLowerCase()}`} aria-hidden="true" />
                 <div><strong>{message.externalId}</strong><small>{message.type} · {message.correlationId.slice(0, 8)}</small></div>
                 <span>{message.attempts} int.</span>
                 <strong>{message.latencyMs === null ? "—" : `${message.latencyMs} ms`}</strong>
+                <span className="sr-only">Estado: {message.status}</span>
               </article>
             ))}
           </div>
@@ -215,7 +218,7 @@ function EmptyState({ title, detail }: { title: string; detail: string }) {
 }
 
 function LoadingPanel() {
-  return <div className="loading-panel" role="status"><span className="loader" /><div><strong>Reconstruyendo el turno</strong><p>Consultando tareas, stock e integraciones.</p></div></div>;
+  return <div className="loading-panel" role="status"><span className="loader" aria-hidden="true" /><div><strong>Reconstruyendo el turno</strong><p>Consultando tareas, stock e integraciones.</p></div></div>;
 }
 
 function StateBanner({ tone, title, detail, action, onAction }: { tone: "warning" | "danger"; title: string; detail: string; action: string; onAction: () => void }) {

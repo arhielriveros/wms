@@ -23,6 +23,8 @@
 - Conmutación blue/green automatizada con ingress estable: green en 1,553 s, rollback blue en 1,296 s y 178 solicitudes sin fallos; API y workers de ambos slots verificados.
 - Gate de seguridad real automatizado con Keycloak 26.1: ocho controles aprobados para autenticación, RBAC, IDOR, adulteración y revocación; evidencia redactada y workflow dedicado.
 - Gate de observabilidad E2E automatizado: RabbitMQ/Redis/MinIO y Grafana verificados; métricas, trazas y logs reales de API/worker consultados en Prometheus, Tempo y Loki; evidencia redactada y workflow dedicado.
+- Gate web `TEST-UX-0001` automatizado con Playwright/axe: cuatro estados/viewport, cero violaciones WCAG automatizables, teclado correcto, screenshots y evidencia JSON en CI.
+- Preparación `TEST-MOB-0003` documentada con precondiciones, matriz y criterios go/no-go para DataWedge, cámara, offline, feedback, iluminación, guantes y sesión sostenida.
 
 ## Pendiente para cerrar Hito 4
 

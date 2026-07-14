@@ -1,0 +1,52 @@
+name: Accessibility Gate
+
+on:
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "docs/testing/**"
+      - "docs/ux/**"
+      - "scripts/accessibility-gate.ps1"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/accessibility.yml"
+  push:
+    branches: [master]
+    paths:
+      - "apps/web/**"
+      - "docs/testing/**"
+      - "docs/ux/**"
+      - "scripts/accessibility-gate.ps1"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/accessibility.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wcag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --workspaces
+      - run: npx playwright install --with-deps chromium
+        working-directory: apps/web
+      - shell: pwsh
+        run: ./scripts/accessibility-gate.ps1
+      - name: Upload redacted accessibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-gate-evidence
+          path: .backups/accessibility/**
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14

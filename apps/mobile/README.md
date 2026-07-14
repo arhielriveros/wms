@@ -53,7 +53,7 @@ En Windows usar `gradlew.bat` después de generar el wrapper. No versionar `loca
 
 ## Pruebas
 
-Los tests JVM verifican orden por tarea/secuencia, límite de batch, idempotencia por `CommandId`, mapeo de los siete resultados de sync y política HTTPS. Las pruebas instrumentadas pendientes deben cubrir Room real, reinicio del proceso, WorkManager, DataWedge físico, cámara y pérdida/restablecimiento de red.
+Los tests JVM verifican orden por tarea/secuencia, límite de batch, idempotencia por `CommandId`, mapeo de los siete resultados de sync y política HTTPS. Las pruebas instrumentadas pendientes deben cubrir Room real, reinicio del proceso, WorkManager, DataWedge físico, cámara y pérdida/restablecimiento de red. La certificación en dispositivo sigue [Preparación UAT física Zebra y ergonomía móvil](../../docs/testing/zebra-uat-readiness.md).
 
 ## Estructura
 

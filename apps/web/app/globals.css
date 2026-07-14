@@ -18,7 +18,10 @@ html { background: var(--concrete); }
 body { margin: 0; color: var(--graphite); background: var(--concrete); font-family: Inter, "Segoe UI", Arial, sans-serif; }
 button, input, select { font: inherit; }
 button { color: inherit; }
-button:focus-visible, a:focus-visible { outline: 3px solid #1e71d8; outline-offset: 2px; }
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible { outline: 3px solid #1e71d8; outline-offset: 2px; }
+.sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
+.skip-link { position: fixed; top: 10px; left: 10px; z-index: 100; padding: 12px 16px; color: white; background: var(--graphite); font-weight: 800; transform: translateY(-160%); }
+.skip-link:focus { transform: translateY(0); }
 
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 224px minmax(0, 1fr); }
 .side-rail { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; background: var(--graphite); color: #edf4f8; border-right: 6px solid var(--cobalt); }
@@ -92,7 +95,7 @@ h2 { margin-bottom: 0; font: 700 21px/1.15 Bahnschrift, "Arial Narrow", sans-ser
 .integration-panel { grid-column: 1; }
 .alerts-panel { grid-column: 2; grid-row: 1 / span 2; }
 .panel-title { min-height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-.panel-title button { border: 0; background: transparent; color: var(--cobalt); font-size: 12px; font-weight: 800; cursor: pointer; }
+.panel-title button { min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--cobalt); font-size: 12px; font-weight: 800; cursor: pointer; }
 .table-wrap { overflow: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
 th { color: var(--graphite-soft); background: #edf2f5; text-align: left; font: 700 10px Bahnschrift, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
